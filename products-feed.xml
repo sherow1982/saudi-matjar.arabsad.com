@@ -11,6 +11,7 @@
       <g:id>mebashi-multi-capsule-coffee-machine</g:id>
       <title>ماكينة قهوة ذكية متعددة الكبسولات</title>
       <link>https://saudi-matjar.arabsad.com/product/mebashi-multi-capsule-coffee-machine</link>
+      <guid>mebashi-multi-capsule-coffee-machine</guid>
       <description>ماكينة قهوة احترافية تدعم كبسولات متعددة، تصميم أنيق وسريع التحضير بلمسة زر واحدة.</description>
       <g:price>399.00 SAR</g:price>
       <g:availability>in_stock</g:availability>
@@ -18,7 +19,7 @@
       <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mebashi.jpg</g:image_link>
       <g:brand>Mebashi</g:brand>
       <g:google_product_category>499955</g:google_product_category>
-      <g:product_type>أجهزة منزلية > القهوة</g:product_type>
+      <g:product_type>أجهزة منزلية &amp;gt; القهوة</g:product_type>
     </item>
 
     <!-- منتج 2 -->
@@ -26,6 +27,7 @@
       <g:id>mini-portable-ac</g:id>
       <title>مكيف هواء محمول صغير</title>
       <link>https://saudi-matjar.arabsad.com/product/mini-portable-ac</link>
+      <guid>mini-portable-ac</guid>
       <description>مكيف متنقل لتبريد فوري وسهل الاستخدام في أي مكان داخل الغرفة أو المكتب.</description>
       <g:price>179.00 SAR</g:price>
       <g:availability>in_stock</g:availability>
@@ -33,7 +35,7 @@
       <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mini-ac.jpg</g:image_link>
       <g:brand>CoolAir</g:brand>
       <g:google_product_category>429</g:google_product_category>
-      <g:product_type>أجهزة منزلية > تبريد</g:product_type>
+      <g:product_type>أجهزة منزلية &amp;gt; تبريد</g:product_type>
     </item>
 
     <!-- منتج 3 -->
@@ -41,6 +43,7 @@
       <g:id>car-seat-organizer</g:id>
       <title>منظم مقعد السيارة الذكي</title>
       <link>https://saudi-matjar.arabsad.com/product/car-seat-organizer</link>
+      <guid>car-seat-organizer</guid>
       <description>منظم عملي يحافظ على ترتيب أغراض السيارة ويوفر مساحة إضافية أنيقة وسهلة التنظيف.</description>
       <g:price>99.00 SAR</g:price>
       <g:availability>in_stock</g:availability>
@@ -48,7 +51,7 @@
       <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/seat-organizer.jpg</g:image_link>
       <g:brand>AutoSmart</g:brand>
       <g:google_product_category>904</g:google_product_category>
-      <g:product_type>سيارات > اكسسوارات</g:product_type>
+      <g:product_type>سيارات &amp;gt; اكسسوارات</g:product_type>
     </item>
 
   </channel>
