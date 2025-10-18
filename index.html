@@ -27,6 +27,9 @@ body { font-family: 'Tajawal', sans-serif; background-color: #f9fafb; margin:0; 
 
 <script>
 const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
+const OLD_DOMAIN = "https://tagerksa.arabsad.com";
+const NEW_DOMAIN = "https://tagerksa.myeasyorders.com/";
+
 let productsData=[];
 
 async function loadProducts() {
@@ -35,8 +38,12 @@ async function loadProducts() {
     try {
         const res = await fetch(FEED_URL);
         const text = await res.text();
+        
+        // استبدال الدومين القديم بالجديد مباشرة
+        const updatedText = text.replaceAll(OLD_DOMAIN, NEW_DOMAIN);
+        
         const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "application/xml");
+        const xml = parser.parseFromString(updatedText, "application/xml");
         const items = xml.querySelectorAll("item");
         productsData = [];
         container.innerHTML = "";
