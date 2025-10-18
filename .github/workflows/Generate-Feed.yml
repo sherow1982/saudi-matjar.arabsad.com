@@ -6,52 +6,61 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write          # الحد الأدنى المطلوب للدفع [web:195]
+  contents: write          # الحد الأدنى المطلوب للدفع
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # قيّد التشغيل على main لتفادي دفع من فروع أخرى [web:49]
+    if: github.ref == 'refs/heads/main'  # قيّد التشغيل على main
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false     # أمنياً أفضل، سنمرر التوكن صراحة عند push [web:167]
+          persist-credentials: false     # سنمرر GITHUB_TOKEN صراحة عند push
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'         # تثبيت نسخة محددة لثبات البيئة [web:49]
+          python-version: '3.11'         # تثبيت نسخة محددة لثبات البيئة
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests bs4 lxml
-        # يمكن إضافة hash pinning/constraints لاحقًا حسب الحاجة [web:49]
 
       - name: Run feed generator
         env:
-          FEED_URL: ${{ secrets.FEED_URL }}  # اختياري
+          FEED_URL: ${{ secrets.FEED_URL }}  # اختياري: مصدر EasyOrders إن لم يتوفر feed.xml
         run: |
           set -e
           python generate_feed.py
-          # تحقّق من وجود الملف الناتج
+          # تحقق من وجود ملف الفيد الناتج
           test -s products-feed.xml || (echo "products-feed.xml not found or empty" && exit 1)
-        # set -e لوقف الخطوة عند أول فشل [web:49]
 
-      - name: Commit and push updated feed
+      # بناء صفحات المنتجات من الفيد والقالب templates/product.html
+      - name: Install dependencies (pages)
+        run: |
+          python -m pip install --upgrade pip
+          pip install bs4 lxml requests
+
+      - name: Build product pages
+        run: |
+          set -e
+          python build_pages.py
+          test -d product || (echo "No product pages generated" && exit 1)
+
+      - name: Commit and push updated feed and pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-
           # إعداد هوية git محلياً فقط
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-          # إضافة الملف الناتج
-          git add products-feed.xml
+          # إضافة الملفات الناتجة
+          git add products-feed.xml product
 
           # إنشاء الالتزام فقط عند وجود تغييرات
           if git diff --cached --quiet; then
@@ -59,10 +68,9 @@ jobs:
             exit 0
           fi
 
-          git commit -m "[skip ci] Auto-update feed"
+          git commit -m "[skip ci] Auto-update feed and pages"
 
-          # دفع آمن باستخدام GITHUB_TOKEN إلى نفس الفرع
-          # مع 3 محاولات لتجاوز أعطال الشبكة المؤقتة
+          # دفع آمن باستخدام GITHUB_TOKEN إلى نفس الفرع مع إعادة محاولات
           for i in 1 2 3; do
             git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "HEAD:${{ github.ref_name }}" && break || \
             (echo "Push failed (attempt $i). Retrying in 5s..." && sleep 5)
