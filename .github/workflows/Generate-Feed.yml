@@ -9,15 +9,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # السماح بالدفع إلى المستودع من داخل العمل
+      contents: write      # مطلوب للدفع إلى المستودع
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # الإبقاء على الاعتماديات الافتراضية جيد في معظم الحالات
-          # وإن واجهت تعارضًا، يمكن ضبطه على false، ثم استخدام GITHUB_TOKEN يدويًا.
-          persist-credentials: true
+          # اجعلها false لعدم إبقاء الاعتماديات متاحة لباقي الخطوات دون حاجة
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,17 +29,23 @@ jobs:
           pip install requests bs4 lxml
 
       - name: Run feed generator
+        env:
+          # اختياري: لو عندك مصدر خارجي للـ XML
+          FEED_URL: ${{ secrets.FEED_URL }}
         run: |
-          # شغّل السكربت وتأكد أنه يكتب products-feed.xml في جذر المستودع
           python generate_feed.py
 
       - name: Commit and push updated feed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # إعداد هوية git محلياً فقط
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          # إضافة الملف الناتج والتزام مشروط
           git add products-feed.xml
-          git commit -m "Auto-update feed" || echo "No changes to commit"
-          # الدفع باستخدام الاعتماديات التي وفرها checkout (أو GITHUB_TOKEN)
-          git push
+          git commit -m "[skip ci] Auto-update feed" || echo "No changes to commit"
+
+          # الدفع باستخدام رمز GITHUB_TOKEN على عنوان HTTPS آمن
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
