@@ -37,7 +37,6 @@ let productsData=[];
 
 function addMetaTags(product){
   const head=document.head;
-  // احذف الميتا القديمة لو موجودة
   const oldMeta=document.querySelectorAll('.dynamic-meta');
   oldMeta.forEach(m=>m.remove());
 
@@ -77,9 +76,11 @@ async function loadProducts(){
       const image=item.querySelector("g\\:image_link, image_link")?.textContent||"";
       const price=parseFloat((item.querySelector("g\\:price, price")?.textContent||"0").replace(/[^\d.]/g,""))||0;
       productsData.push({title,link,image,price});
+      // إضافة Meta Tags لكل منتج عند التحميل
+      addMetaTags({title,image,price});
       container.innerHTML+=`
       <div class="card bg-white p-4 rounded-xl shadow">
-        <a href="${link}" target="_blank" onclick="addMetaTags({title:'${title}',image:'${image}',price:${price}})">
+        <a href="${link}" target="_blank">
           <img src="${image}" alt="${title}" loading="lazy" class="product-image rounded-lg mb-3">
         </a>
         <h2 class="text-base sm:text-lg font-semibold mb-1">${title}</h2>
@@ -108,7 +109,7 @@ document.getElementById('search').addEventListener('input',function(){
   filtered.forEach(prod=>{
     container.innerHTML+=`
     <div class="card bg-white p-4 rounded-xl shadow">
-      <a href="${prod.link}" target="_blank" onclick="addMetaTags({title:'${prod.title}',image:'${prod.image}',price:${prod.price}})">
+      <a href="${prod.link}" target="_blank">
         <img src="${prod.image}" alt="${prod.title}" loading="lazy" class="product-image rounded-lg mb-3">
       </a>
       <h2 class="text-base sm:text-lg font-semibold mb-1">${prod.title}</h2>
