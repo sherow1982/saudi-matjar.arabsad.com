@@ -1,0 +1,26 @@
+name: تحديث فيد المنتجات تلقائيًا
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # يحدث كل 6 ساعات
+  workflow_dispatch:
+
+jobs:
+  update-feed:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: تحميل المستودع
+      uses: actions/checkout@v3
+
+    - name: جلب الفيد من EasyOrders
+      run: |
+        curl -L "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google" -o products-feed.xml
+
+    - name: رفع الملف وتحديث الموقع
+      run: |
+        git config user.name "GitHub Action"
+        git config user.email "actions@github.com"
+        git add products-feed.xml
+        git commit -m "تحديث تلقائي للفيد"
+        git push
