@@ -35,6 +35,31 @@ body {font-family:'Tajawal',sans-serif;background:#f9fafb;margin:0;padding:0;}
 const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
 let productsData=[];
 
+function addMetaTags(product){
+  const head=document.head;
+  // احذف الميتا القديمة لو موجودة
+  const oldMeta=document.querySelectorAll('.dynamic-meta');
+  oldMeta.forEach(m=>m.remove());
+
+  const metaOgTitle=document.createElement('meta');
+  metaOgTitle.className='dynamic-meta';
+  metaOgTitle.setAttribute('property','og:title');
+  metaOgTitle.content=product.title;
+  head.appendChild(metaOgTitle);
+
+  const metaOgDesc=document.createElement('meta');
+  metaOgDesc.className='dynamic-meta';
+  metaOgDesc.setAttribute('property','og:description');
+  metaOgDesc.content=product.title+' - سعر: '+product.price+' ر.س';
+  head.appendChild(metaOgDesc);
+
+  const metaOgImage=document.createElement('meta');
+  metaOgImage.className='dynamic-meta';
+  metaOgImage.setAttribute('property','og:image');
+  metaOgImage.content=product.image;
+  head.appendChild(metaOgImage);
+}
+
 async function loadProducts(){
   const container=document.getElementById('products');
   container.innerHTML='<p class="loading-msg">Loading...</p>';
@@ -54,7 +79,7 @@ async function loadProducts(){
       productsData.push({title,link,image,price});
       container.innerHTML+=`
       <div class="card bg-white p-4 rounded-xl shadow">
-        <a href="${link}" target="_blank">
+        <a href="${link}" target="_blank" onclick="addMetaTags({title:'${title}',image:'${image}',price:${price}})">
           <img src="${image}" alt="${title}" loading="lazy" class="product-image rounded-lg mb-3">
         </a>
         <h2 class="text-base sm:text-lg font-semibold mb-1">${title}</h2>
@@ -83,7 +108,7 @@ document.getElementById('search').addEventListener('input',function(){
   filtered.forEach(prod=>{
     container.innerHTML+=`
     <div class="card bg-white p-4 rounded-xl shadow">
-      <a href="${prod.link}" target="_blank">
+      <a href="${prod.link}" target="_blank" onclick="addMetaTags({title:'${prod.title}',image:'${prod.image}',price:${prod.price}})">
         <img src="${prod.image}" alt="${prod.title}" loading="lazy" class="product-image rounded-lg mb-3">
       </a>
       <h2 class="text-base sm:text-lg font-semibold mb-1">${prod.title}</h2>
