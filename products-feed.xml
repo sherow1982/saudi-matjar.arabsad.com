@@ -1,33 +1,52 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
-  <channel>
-    <title>اعلانات العرب شريف سلامة</title>
-    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>
-    <description>منتجات متجر اعلانات العرب</description>
+import requests
+from bs4 import BeautifulSoup
 
-    <item>
-      <title>اسم المنتج الأول</title>
-      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/product1</link>
-      <description>وصف المنتج الأول هنا</description>
-      <g:image_link>https://example.com/product1.jpg</g:image_link>
-      <g:availability>in stock</g:availability>
-      <g:price>99 SAR</g:price>
-      <g:condition>new</g:condition>
-      <g:id>1</g:id>
-      <g:brand>اعلانات العرب</g:brand>
-    </item>
+FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google"
+OUTPUT_FILE = "products-feed.xml"
 
-    <item>
-      <title>اسم المنتج الثاني</title>
-      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/product2</link>
-      <description>وصف المنتج الثاني هنا</description>
-      <g:image_link>https://example.com/product2.jpg</g:image_link>
-      <g:availability>in stock</g:availability>
-      <g:price>149 SAR</g:price>
-      <g:condition>new</g:condition>
-      <g:id>2</g:id>
-      <g:brand>اعلانات العرب</g:brand>
-    </item>
+def generate_feed():
+    print("Fetching EasyOrders feed...")
+    response = requests.get(FEED_URL)
+    response.raise_for_status()
 
-  </channel>
-</rss>
+    soup = BeautifulSoup(response.text, "xml")
+    items = soup.find_all("item")
+
+    print(f"Fetched {len(items)} products. Generating Google Merchant feed...")
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n')
+        f.write("  <channel>\n")
+        f.write("    <title>اعلانات العرب شريف سلامة</title>\n")
+        f.write("    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>\n")
+        f.write("    <description>منتجات متجر اعلانات العرب - السعودية</description>\n\n")
+
+        for index, item in enumerate(items, start=1):
+            title = item.find("title").text if item.find("title") else ""
+            link = item.find("link").text if item.find("link") else ""
+            image = item.find("g:image_link").text if item.find("g:image_link") else ""
+            price = item.find("g:price").text if item.find("g:price") else ""
+            desc = item.find("description").text if item.find("description") else ""
+
+            # تعديل الرابط ليدعم الدومين الجديد
+            link = link.replace("https://tagerksa.arabsad.com", "https://tagerksa.myeasyorders.com")
+
+            f.write("    <item>\n")
+            f.write(f"      <g:id>{index}</g:id>\n")
+            f.write(f"      <title>{title}</title>\n")
+            f.write(f"      <link>{link}</link>\n")
+            f.write(f"      <g:image_link>{image}</g:image_link>\n")
+            f.write(f"      <description>{desc}</description>\n")
+            f.write(f"      <g:price>{price}</g:price>\n")
+            f.write("      <g:availability>in stock</g:availability>\n")
+            f.write("      <g:condition>new</g:condition>\n")
+            f.write("      <g:brand>اعلانات العرب</g:brand>\n")
+            f.write("    </item>\n")
+
+        f.write("  </channel>\n</rss>\n")
+
+    print("✅ products-feed.xml generated successfully!")
+
+if __name__ == "__main__":
+    generate_feed()
