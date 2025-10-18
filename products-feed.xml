@@ -1,87 +1,51 @@
-import requests
-import os
-import xml.etree.ElementTree as ET
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>اعلانات العرب شريف سلامة</title>
+    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>
+    <description>تغذية المنتجات لمتجر السعودية - اعلانات العرب شريف سلامة</description>
 
-# رابط الفيد من EasyOrders
-EASYORDERS_FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
+    <!-- منتج 1 -->
+    <item>
+      <g:id>mebashi-multi-capsule-coffee-machine</g:id>
+      <title>ماكينة قهوة ذكية متعددة الكبسولات</title>
+      <link>https://saudi-matjar.arabsad.com/product/mebashi-multi-capsule-coffee-machine</link>
+      <description>ماكينة قهوة احترافية تدعم كبسولات متعددة، تصميم أنيق وسريع التحضير بلمسة زر واحدة.</description>
+      <g:price>399.00 SAR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mebashi.jpg</g:image_link>
+      <g:brand>Mebashi</g:brand>
+      <g:google_product_category>499955</g:google_product_category>
+    </item>
 
-# نطاق الموقع الأساسي (اللي عايز الزوار يتحولوا عليه)
-SITE_BASE_URL = "https://saudi-matjar.arabsad.com"
+    <!-- منتج 2 -->
+    <item>
+      <g:id>mini-portable-ac</g:id>
+      <title>مكيف هواء محمول صغير</title>
+      <link>https://saudi-matjar.arabsad.com/product/mini-portable-ac</link>
+      <description>مكيف متنقل لتبريد فوري وسهل الاستخدام في أي مكان داخل الغرفة أو المكتب.</description>
+      <g:price>179.00 SAR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mini-ac.jpg</g:image_link>
+      <g:brand>CoolAir</g:brand>
+      <g:google_product_category>429</g:google_product_category>
+    </item>
 
-# مجلد صفحات المنتجات
-PRODUCTS_DIR = "products"
+    <!-- منتج 3 -->
+    <item>
+      <g:id>car-seat-organizer</g:id>
+      <title>منظم مقعد السيارة الذكي</title>
+      <link>https://saudi-matjar.arabsad.com/product/car-seat-organizer</link>
+      <description>منظم عملي يحافظ على ترتيب أغراض السيارة ويوفر مساحة إضافية أنيقة وسهلة التنظيف.</description>
+      <g:price>99.00 SAR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/seat-organizer.jpg</g:image_link>
+      <g:brand>AutoSmart</g:brand>
+      <g:google_product_category>904</g:google_product_category>
+    </item>
 
-def fetch_easyorders_feed():
-    print("🔄 جاري جلب الفيد من EasyOrders ...")
-    response = requests.get(EASYORDERS_FEED_URL)
-    response.raise_for_status()
-    return ET.fromstring(response.content)
-
-def generate_product_page(product_id, title, description, image, price):
-    """ينشئ صفحة HTML بسيطة لكل منتج"""
-    os.makedirs(PRODUCTS_DIR, exist_ok=True)
-    file_path = os.path.join(PRODUCTS_DIR, f"{product_id}.html")
-
-    html_content = f"""<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
-</head>
-<body dir="rtl" style="font-family: Arial; margin: 20px;">
-<h1>{title}</h1>
-<img src="{image}" alt="{title}" style="max-width: 300px; border-radius: 10px;">
-<p style="font-size: 18px;">{description}</p>
-<p style="font-weight: bold;">السعر: {price}</p>
-</body>
-</html>"""
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-def generate_google_feed(root):
-    """ينشئ ملف XML متوافق مع Google Merchant"""
-    rss = ET.Element("rss", version="2.0", attrib={"xmlns:g": "http://base.google.com/ns/1.0"})
-    channel = ET.SubElement(rss, "channel")
-
-    ET.SubElement(channel, "title").text = "اعلانات العرب شريف سلامة"
-    ET.SubElement(channel, "link").text = SITE_BASE_URL
-    ET.SubElement(channel, "description").text = "تغذية المنتجات لمتجر السعودية - اعلانات العرب شريف سلامة"
-
-    for item in root.findall("./channel/item"):
-        product_id = item.find("g:id").text.strip()
-        title = item.find("title").text.strip()
-        description = item.find("description").text.strip()
-        price = item.find("g:price").text.strip()
-        image = item.find("g:image_link").text.strip()
-        brand = item.find("g:brand").text.strip() if item.find("g:brand") is not None else "Brand"
-        category = item.find("g:google_product_category").text.strip() if item.find("g:google_product_category") is not None else "0"
-
-        # إنشاء صفحة المنتج
-        generate_product_page(product_id, title, description, image, price)
-
-        # بناء عنصر XML جديد
-        xml_item = ET.SubElement(channel, "item")
-        ET.SubElement(xml_item, "g:id").text = product_id
-        ET.SubElement(xml_item, "title").text = title
-        ET.SubElement(xml_item, "link").text = f"{SITE_BASE_URL}/product/{product_id}"
-        ET.SubElement(xml_item, "description").text = description
-        ET.SubElement(xml_item, "g:price").text = price
-        ET.SubElement(xml_item, "g:availability").text = "in stock"
-        ET.SubElement(xml_item, "g:condition").text = "new"
-        ET.SubElement(xml_item, "g:image_link").text = f"{SITE_BASE_URL}/uploads/{os.path.basename(image)}"
-        ET.SubElement(xml_item, "g:brand").text = brand
-        ET.SubElement(xml_item, "g:google_product_category").text = category
-
-    tree = ET.ElementTree(rss)
-    tree.write("products-feed.xml", encoding="utf-8", xml_declaration=True)
-    print("✅ تم إنشاء ملف products-feed.xml بنجاح.")
-
-def main():
-    root = fetch_easyorders_feed()
-    generate_google_feed(root)
-    print("🎉 تم تحديث الفيد وإنشاء الصفحات بنجاح.")
-
-if __name__ == "__main__":
-    main()
+  </channel>
+</rss>
