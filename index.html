@@ -4,23 +4,17 @@
 <meta charset="UTF-8">
 <title>متجر السعودية</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="تصفح منتجات متجر السعودية مباشرة وسهل الشراء.">
-<meta property="og:title" content="متجر السعودية">
-<meta property="og:description" content="تصفح منتجات متجر السعودية مباشرة وسهل الشراء.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://saudi-matjar.arabsad.com/">
-<meta property="og:image" content="">
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <style>
-body {font-family:'Tajawal',sans-serif;background:#f9fafb;margin:0;padding:0;}
-.card {transition:all .2s ease-in-out;text-align:center;}
-.card:hover {transform:scale(1.03);box-shadow:0 8px 20px rgba(0,0,0,.1);}
-.shop-btn {font-weight:bold;padding:10px;border-radius:8px;display:block;margin:10px auto;cursor:pointer;background:#00bfff;color:#fff;text-decoration:none;text-align:center;width:90%;}
-.product-image {width:100%;height:auto;object-fit:contain;cursor:pointer;}
-#products {padding-bottom:140px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
-.badge {background:#FFD700;color:#000;font-weight:bold;padding:3px 6px;margin-top:5px;display:inline-block;border-radius:4px;font-size:.85rem;}
-.loading-msg {text-align:center;color:#555;font-weight:bold;font-size:1rem;margin-top:50px;}
-#search {width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:20px;font-weight:bold;}
+body { font-family: 'Tajawal', sans-serif; background-color: #f9fafb; margin:0; padding:0; }
+.card { transition: all 0.2s ease-in-out; text-align:center; }
+.card:hover { transform: scale(1.03); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+.shop-btn { font-weight:bold; padding:10px; border-radius:8px; display:block; margin:10px auto; cursor:pointer; background:#00bfff; color:#fff; text-decoration:none; text-align:center; width:90%; }
+.product-image { width:100%; height:auto; object-fit:contain; cursor:pointer; }
+#products { padding-bottom:140px; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+.badge { background:#FFD700; color:#000; font-weight:bold; padding:3px 6px; margin-top:5px; display:inline-block; border-radius:4px; font-size:.85rem; }
+.loading-msg { text-align:center; color:#555; font-weight:bold; font-size:1rem; margin-top:50px; }
+#search { width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; margin-bottom:20px; font-weight:bold; }
 </style>
 </head>
 <body class="p-4">
@@ -35,89 +29,63 @@ body {font-family:'Tajawal',sans-serif;background:#f9fafb;margin:0;padding:0;}
 const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
 let productsData=[];
 
-function addMetaTags(product){
-  const head=document.head;
-  const oldMeta=document.querySelectorAll('.dynamic-meta');
-  oldMeta.forEach(m=>m.remove());
-
-  const metaOgTitle=document.createElement('meta');
-  metaOgTitle.className='dynamic-meta';
-  metaOgTitle.setAttribute('property','og:title');
-  metaOgTitle.content=product.title;
-  head.appendChild(metaOgTitle);
-
-  const metaOgDesc=document.createElement('meta');
-  metaOgDesc.className='dynamic-meta';
-  metaOgDesc.setAttribute('property','og:description');
-  metaOgDesc.content=product.title+' - سعر: '+product.price+' ر.س';
-  head.appendChild(metaOgDesc);
-
-  const metaOgImage=document.createElement('meta');
-  metaOgImage.className='dynamic-meta';
-  metaOgImage.setAttribute('property','og:image');
-  metaOgImage.content=product.image;
-  head.appendChild(metaOgImage);
-}
-
-async function loadProducts(){
-  const container=document.getElementById('products');
-  container.innerHTML='<p class="loading-msg">Loading...</p>';
-  try{
-    const res=await fetch(FEED_URL);
-    const text=await res.text();
-    const parser=new DOMParser();
-    const xml=parser.parseFromString(text,"application/xml");
-    const items=xml.querySelectorAll("item");
-    productsData=[];
-    container.innerHTML="";
-    items.forEach(item=>{
-      const title=item.querySelector("title")?.textContent||"منتج بدون اسم";
-      const link=item.querySelector("link")?.textContent||"#";
-      const image=item.querySelector("g\\:image_link, image_link")?.textContent||"";
-      const price=parseFloat((item.querySelector("g\\:price, price")?.textContent||"0").replace(/[^\d.]/g,""))||0;
-      productsData.push({title,link,image,price});
-      // إضافة Meta Tags لكل منتج عند التحميل
-      addMetaTags({title,image,price});
-      container.innerHTML+=`
-      <div class="card bg-white p-4 rounded-xl shadow">
-        <a href="${link}" target="_blank">
-          <img src="${image}" alt="${title}" loading="lazy" class="product-image rounded-lg mb-3">
-        </a>
-        <h2 class="text-base sm:text-lg font-semibold mb-1">${title}</h2>
-        <span style="font-weight:bold;color:#006400;font-size:1.2rem;">${price} ر.س</span>
-        <a href="${link}" target="_blank" class="shop-btn">تسوق الآن</a>
-        <div class="badge">شحن داخل السعودية</div>
-      </div>`;
-    });
-  }catch(err){
-    console.error(err);
-    container.innerHTML='<p class="text-center text-red-500 font-bold">حدث خطأ في تحميل المنتجات.</p>';
-  }
+async function loadProducts() {
+    const container = document.getElementById('products');
+    container.innerHTML = '<p class="loading-msg">Loading...</p>';
+    try {
+        const res = await fetch(FEED_URL);
+        const text = await res.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "application/xml");
+        const items = xml.querySelectorAll("item");
+        productsData = [];
+        container.innerHTML = "";
+        items.forEach(item => {
+            const title = item.querySelector("title")?.textContent || "منتج بدون اسم";
+            const link = item.querySelector("link")?.textContent || "#";
+            const image = item.querySelector("g\\:image_link, image_link")?.textContent || "";
+            const price = parseFloat((item.querySelector("g\\:price, price")?.textContent || "0").replace(/[^\d.]/g,"")) || 0;
+            productsData.push({title, link, image, price});
+            container.innerHTML += `
+            <div class="card bg-white p-4 rounded-xl shadow">
+                <a href="${link}" target="_blank">
+                    <img src="${image}" alt="${title}" loading="lazy" class="product-image rounded-lg mb-3">
+                </a>
+                <h2 class="text-base sm:text-lg font-semibold mb-1">${title}</h2>
+                <span style="font-weight:bold;color:#006400;font-size:1.2rem;">${price} ر.س</span>
+                <a href="${link}" target="_blank" class="shop-btn">تسوق الآن</a>
+                <div class="badge">شحن داخل السعودية</div>
+            </div>`;
+        });
+    } catch(err) {
+        console.error(err);
+        container.innerHTML = '<p class="text-center text-red-500 font-bold">حدث خطأ في تحميل المنتجات.</p>';
+    }
 }
 
 loadProducts();
 
-document.getElementById('search').addEventListener('input',function(){
-  const val=this.value.toLowerCase();
-  const filtered=productsData.filter(p=>p.title.toLowerCase().includes(val));
-  const container=document.getElementById('products');
-  container.innerHTML="";
-  if(filtered.length===0){
-    container.innerHTML='<p class="text-center text-gray-500">لا توجد منتجات مطابقة.</p>';
-    return;
-  }
-  filtered.forEach(prod=>{
-    container.innerHTML+=`
-    <div class="card bg-white p-4 rounded-xl shadow">
-      <a href="${prod.link}" target="_blank">
-        <img src="${prod.image}" alt="${prod.title}" loading="lazy" class="product-image rounded-lg mb-3">
-      </a>
-      <h2 class="text-base sm:text-lg font-semibold mb-1">${prod.title}</h2>
-      <span style="font-weight:bold;color:#006400;font-size:1.2rem;">${prod.price} ر.س</span>
-      <a href="${prod.link}" target="_blank" class="shop-btn">تسوق الآن</a>
-      <div class="badge">شحن داخل السعودية</div>
-    </div>`;
-  });
+document.getElementById('search').addEventListener('input', function() {
+    const val = this.value.toLowerCase();
+    const filtered = productsData.filter(p => p.title.toLowerCase().includes(val));
+    const container = document.getElementById('products');
+    container.innerHTML = "";
+    if(filtered.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500">لا توجد منتجات مطابقة.</p>';
+        return;
+    }
+    filtered.forEach(prod => {
+        container.innerHTML += `
+        <div class="card bg-white p-4 rounded-xl shadow">
+            <a href="${prod.link}" target="_blank">
+                <img src="${prod.image}" alt="${prod.title}" loading="lazy" class="product-image rounded-lg mb-3">
+            </a>
+            <h2 class="text-base sm:text-lg font-semibold mb-1">${prod.title}</h2>
+            <span style="font-weight:bold;color:#006400;font-size:1.2rem;">${prod.price} ر.س</span>
+            <a href="${prod.link}" target="_blank" class="shop-btn">تسوق الآن</a>
+            <div class="badge">شحن داخل السعودية</div>
+        </div>`;
+    });
 });
 </script>
 
