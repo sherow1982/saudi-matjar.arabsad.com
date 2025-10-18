@@ -7,25 +7,20 @@ import re
 import requests
 from typing import Optional, Iterable, Tuple, Dict, List
 from bs4 import BeautifulSoup
-from xml.etree.ElementTree import Element, SubElement, ElementTree, register_namespace
+from lxml import etree  # استخدام lxml لتسهيل CDATA [web:245]
 
-# إعداد namespace لـ Google Merchant
 G_NS = "http://base.google.com/ns/1.0"
-register_namespace('g', G_NS)  # يضمن xmlns:g في الجذر عند الكتابة [web:26][web:179]
-
+NSMAP = {"g": G_NS}
 ALLOWED_AVAIL = {"in_stock", "out_of_stock", "preorder", "backorder"}  # [web:80][web:16]
 
 def read_input_xml() -> str:
-    # 1) stdin إن كان غير فارغ
     if not sys.stdin.isatty():
         data = sys.stdin.read()
         if data.strip():
             return data
-    # 2) ملف محلي
     if os.path.exists("feed.xml"):
         with open("feed.xml", "r", encoding="utf-8") as f:
             return f.read()
-    # 3) رابط خارجي
     feed_url = os.getenv("FEED_URL")
     if feed_url:
         resp = requests.get(feed_url, timeout=30)
@@ -48,8 +43,33 @@ def iter_entries(soup: BeautifulSoup) -> Iterable:
         return items
     return soup.find_all('entry')
 
+def normalize_price(val: Optional[str]) -> Optional[str]:
+    if not val:
+        return None
+    s = re.sub(r"\s+", " ", val.strip())
+    m = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*([A-Z]{3})$", s)
+    if m:
+        amount, cur = m.groups()
+        return f"{amount} {cur}"
+    m2 = re.match(r"^([A-Z]{3})\s*([0-9]+(?:\.[0-9]+)?)$", s)
+    if m2:
+        cur, amount = m2.groups()
+        return f"{amount} {cur}"
+    digits = re.findall(r"[0-9]+(?:\.[0-9]+)?", s)
+    cur = re.findall(r"[A-Z]{3}", s)
+    if digits:
+        amount = digits[0]
+        currency = cur[0] if cur else "SAR"
+        return f"{amount} {currency}"
+    return None
+
+def normalize_availability(val: Optional[str]) -> Optional[str]:
+    if not val:
+        return None
+    v = val.strip().lower().replace(" ", "_")
+    return v if v in ALLOWED_AVAIL else None  # [web:80]
+
 def extract_fields(item) -> Dict[str, Optional[str]]:
-    # الحقول الشائعة حسب مواصفات Google Merchant [web:80]
     gid = item.find('g:id')
     plain_id = item.find('id')
     title = item.find('g:title') or item.find('title')
@@ -60,6 +80,8 @@ def extract_fields(item) -> Dict[str, Optional[str]]:
     description = item.find('g:description') or item.find('description') or item.find('summary')
     brand = item.find('g:brand') or item.find('brand')
     condition = item.find('g:condition') or item.find('condition')
+    product_type = item.find('g:product_type') or item.find('product_type')
+    google_cat = item.find('g:google_product_category') or item.find('google_product_category')
 
     product_id = first_text(
         text_or_none(gid),
@@ -78,42 +100,12 @@ def extract_fields(item) -> Dict[str, Optional[str]]:
         "description": text_or_none(description),
         "brand": text_or_none(brand),
         "condition": text_or_none(condition),
+        "product_type": text_or_none(product_type),
+        "google_product_category": text_or_none(google_cat),
     }
 
-def normalize_price(val: Optional[str]) -> Optional[str]:
-    # يقبل أشكال متعددة ويرجع "123.45 SAR" مثلًا [web:80]
-    if not val:
-        return None
-    s = val.strip()
-    # إزالة مسافات زائدة داخل الرقم
-    s = re.sub(r"\s+", " ", s)
-    # التقاط رقم + عملة
-    m = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*([A-Z]{3})$", s)
-    if m:
-        amount, cur = m.groups()
-        return f"{amount} {cur}"
-    # لو كانت العملة في البداية "SAR 123.45" اقلب
-    m2 = re.match(r"^([A-Z]{3})\s*([0-9]+(?:\.[0-9]+)?)$", s)
-    if m2:
-        cur, amount = m2.groups()
-        return f"{amount} {cur}"
-    # إزالة أي محارف غير رقمية ونقطة من الجزء الرقمي ومحاولة توقع SAR كافتراضي
-    digits = re.findall(r"[0-9]+(?:\.[0-9]+)?", s)
-    cur = re.findall(r"[A-Z]{3}", s)
-    if digits:
-        amount = digits[0]
-        currency = cur[0] if cur else "SAR"
-        return f"{amount} {currency}"
-    return None
-
-def normalize_availability(val: Optional[str]) -> Optional[str]:
-    if not val:
-        return None
-    v = val.strip().lower().replace(" ", "_")
-    return v if v in ALLOWED_AVAIL else None  # غير المسموح يحذف [web:80]
-
 def generate_google_records(xml_text: str) -> Tuple[List[Dict[str, Optional[str]]], List[str]]:
-    soup = BeautifulSoup(xml_text, 'xml')  # parser XML ضروري مع g: [web:6]
+    soup = BeautifulSoup(xml_text, 'xml')  # parser=xml مع g: [web:16]
     records: List[Dict[str, Optional[str]]] = []
     skipped: List[str] = []
 
@@ -122,7 +114,6 @@ def generate_google_records(xml_text: str) -> Tuple[List[Dict[str, Optional[str]
         if not data["id"]:
             skipped.append(f"Entry #{idx} skipped: missing id (g:id/id/title/link).")
             continue
-        # تحقق من الحقول الضرورية قبل الإضافة: id, title, link, image_link, price, availability [web:80][web:16]
         required_missing = [k for k in ("title", "link", "image_link", "price", "availability") if not data.get(k)]
         if required_missing:
             skipped.append(f"Entry #{idx} skipped: missing required {required_missing}.")
@@ -132,40 +123,50 @@ def generate_google_records(xml_text: str) -> Tuple[List[Dict[str, Optional[str]
     return records, skipped
 
 def write_google_rss(records: List[Dict[str, Optional[str]]], out_path: str = "products-feed.xml") -> None:
-    rss = Element('rss', attrib={"version": "2.0"})
-    channel = SubElement(rss, 'channel')
-    SubElement(channel, 'title').text = "Products Feed"
-    SubElement(channel, 'link').text = "https://example.com"
-    SubElement(channel, 'description').text = "Auto-generated Google Products Feed"
+    # بناء الجذر مع NSMAP لضمان xmlns:g
+    rss = etree.Element("rss", nsmap=NSMAP)
+    rss.set("version", "2.0")
+    channel = etree.SubElement(rss, "channel")
+
+    # عناوين القناة مع CDATA
+    title_el = etree.SubElement(channel, "title")
+    title_el.text = etree.CDATA("Products Feed")  # يمكنك تخصيصه
+    link_el = etree.SubElement(channel, "link")
+    link_el.text = "https://example.com"
+    desc_el = etree.SubElement(channel, "description")
+    desc_el.text = etree.CDATA("Auto-generated Google Products Feed")
 
     for rec in records:
-        item = SubElement(channel, 'item')
+        item = etree.SubElement(channel, "item")
 
-        def g(tag: str, value: Optional[str]):
-            if value:
-                SubElement(item, f"{{{G_NS}}}{tag}").text = value  # {ns}tag [web:26][web:179]
+        def g(tag: str, value: Optional[str], cdata: bool = False):
+            if value is None:
+                return
+            el = etree.SubElement(item, f"{{{G_NS}}}{tag}")
+            el.text = etree.CDATA(value) if cdata else value
 
-        # الحقول المطلوبة
-        g('id', rec.get('id'))
-        g('title', rec.get('title'))
-        g('description', rec.get('description') or rec.get('title'))
-        g('link', rec.get('link'))
-        g('image_link', rec.get('image_link'))
-        g('price', rec.get('price'))
-        g('availability', rec.get('availability'))
+        # الحقول المطلوبة (استخدم CDATA للنصوص)
+        g("id", rec.get("id"))
+        t = etree.SubElement(item, "title"); t.text = etree.CDATA(rec["title"])  # RSS title [web:16]
+        l = etree.SubElement(item, "link"); l.text = rec["link"]
+        d = etree.SubElement(item, "description"); d.text = etree.CDATA(rec.get("description") or rec["title"])
+        g("link", rec.get("link"))
+        g("image_link", rec.get("image_link"))
+        g("price", rec.get("price"))
+        g("availability", rec.get("availability"))
 
-        # الحقول الاختيارية المفيدة
-        g('brand', rec.get('brand'))
-        g('condition', rec.get('condition') or "new")
+        # الحقول الاختيارية
+        g("brand", rec.get("brand"), cdata=True)
+        g("condition", rec.get("condition") or "new")
+        g("product_type", rec.get("product_type"), cdata=True)
+        g("google_product_category", rec.get("google_product_category"))
 
         # RSS القياسية
-        if rec.get('link'):
-            SubElement(item, 'link').text = rec['link']
-        if rec.get('id'):
-            SubElement(item, 'guid').text = rec['id']
+        guid = etree.SubElement(item, "guid"); guid.text = rec["id"]
 
-    tree = ElementTree(rss)
-    tree.write(out_path, encoding="utf-8", xml_declaration=True)
+    # كتابة الملف
+    tree = etree.ElementTree(rss)
+    tree.write(out_path, encoding="UTF-8", xml_declaration=True, pretty_print=True)
 
 def main():
     print("🔄 جاري جلب ومعالجة الفيد ...")
