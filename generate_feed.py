@@ -1,44 +1,49 @@
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime
 
-# رابط الفيد أو API من EasyOrders (استبدله برابط الفيد الحقيقي)
-EASYORDERS_FEED_URL = "https://saudi-matjar.arabsad.com/products-feed.xml"
+# رابط الفيد الحقيقي من EasyOrders
+EASYORDERS_FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
 
-# الدومين اللي عايز يظهر في جوجل
-GITHUB_DOMAIN = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
+# دومين GitHub Pages اللي هيظهر في Google Merchant
+GITHUB_PAGES_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
 
-# اسم ملف الفيد النهائي
 OUTPUT_FILE = "products-feed.xml"
 
+
 def fetch_easyorders_feed():
-    print("جاري جلب البيانات من EasyOrders ...")
+    print("Fetching EasyOrders feed...")
     response = requests.get(EASYORDERS_FEED_URL)
     response.raise_for_status()
-    return ET.fromstring(response.text)
+    return ET.fromstring(response.content)
 
-def rewrite_feed_links(root):
-    print("يتم تعديل روابط المنتجات ...")
+
+def transform_links(root):
+    """يعدل روابط المنتجات والصور لتشير إلى GitHub Pages بدل EasyOrders"""
     for item in root.findall(".//item"):
         link = item.find("link")
+        image_link = item.find("{http://base.google.com/ns/1.0}image_link")
+
         if link is not None and link.text:
-            original_link = link.text.strip()
-            product_slug = original_link.split("/")[-1]
-            # الرابط اللي هيظهر في جوجل (من GitHub)
-            link.text = f"{GITHUB_DOMAIN}/products/{product_slug}"
-    return root
+            product_path = link.text.split("/products/")[-1]
+            link.text = f"{GITHUB_PAGES_BASE}/products/{product_path}"
+
+        if image_link is not None and image_link.text:
+            image_path = image_link.text.split("/")[-1]
+            image_link.text = f"{GITHUB_PAGES_BASE}/uploads/{image_path}"
+
 
 def save_feed(root):
-    print("يتم حفظ الفيد المعدل ...")
+    print("Saving updated feed...")
     tree = ET.ElementTree(root)
     tree.write(OUTPUT_FILE, encoding="utf-8", xml_declaration=True)
-    print(f"تم حفظ الملف بنجاح باسم {OUTPUT_FILE}")
+
 
 def main():
     root = fetch_easyorders_feed()
-    new_root = rewrite_feed_links(root)
-    save_feed(new_root)
-    print(f"تم إنشاء الفيد بتاريخ {datetime.now().isoformat()}")
+    transform_links(root)
+    save_feed(root)
+    print("✅ Feed updated successfully and saved as products-feed.xml")
+
 
 if __name__ == "__main__":
     main()
