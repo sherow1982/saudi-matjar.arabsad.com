@@ -1,87 +1,95 @@
-import requests
-import os
-import xml.etree.ElementTree as ET
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# رابط الفيد من EasyOrders
-EASYORDERS_FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
+from bs4 import BeautifulSoup
+from typing import Optional, Iterable, Tuple, Dict, Any
+import sys
 
-# نطاق الموقع الأساسي (اللي عايز الزوار يتحولوا عليه)
-SITE_BASE_URL = "https://saudi-matjar.arabsad.com"
+def text_or_none(tag) -> Optional[str]:
+    return tag.get_text(strip=True) if tag and hasattr(tag, "get_text") else None
 
-# مجلد صفحات المنتجات
-PRODUCTS_DIR = "products"
+def first_text(*candidates) -> Optional[str]:
+    for t in candidates:
+        if t:
+            return t
+    return None
 
-def fetch_easyorders_feed():
-    print("🔄 جاري جلب الفيد من EasyOrders ...")
-    response = requests.get(EASYORDERS_FEED_URL)
-    response.raise_for_status()
-    return ET.fromstring(response.content)
+def iter_entries(soup: BeautifulSoup) -> Iterable:
+    # يدعم RSS (item) وAtom (entry)
+    entries = soup.find_all('item')
+    if entries:
+        return entries
+    return soup.find_all('entry')
 
-def generate_product_page(product_id, title, description, image, price):
-    """ينشئ صفحة HTML بسيطة لكل منتج"""
-    os.makedirs(PRODUCTS_DIR, exist_ok=True)
-    file_path = os.path.join(PRODUCTS_DIR, f"{product_id}.html")
+def extract_fields(item) -> Dict[str, Optional[str]]:
+    # حاول أولاً وسوم Google namespace، ثم بدائل عامة إذا لم تتوفر
+    gid = item.find('g:id')
+    plain_id = item.find('id')
+    title = item.find('g:title') or item.find('title')
+    link = item.find('g:link') or item.find('link')
+    price = item.find('g:price') or item.find('price')
+    availability = item.find('g:availability') or item.find('availability')
+    image_link = item.find('g:image_link') or item.find('image_link') or item.find('image')
+    description = item.find('g:description') or item.find('description')
 
-    html_content = f"""<!DOCTYPE html>
-<html lang="ar">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
-</head>
-<body dir="rtl" style="font-family: Arial; margin: 20px;">
-<h1>{title}</h1>
-<img src="{image}" alt="{title}" style="max-width: 300px; border-radius: 10px;">
-<p style="font-size: 18px;">{description}</p>
-<p style="font-weight: bold;">السعر: {price}</p>
-</body>
-</html>"""
+    product_id = first_text(
+        text_or_none(gid),
+        text_or_none(plain_id),
+        # fallback مستمد من عنوان/رابط إن اضطررنا
+        text_or_none(title),
+        text_or_none(link),
+    )
 
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
+    return {
+        "id": product_id,
+        "title": text_or_none(title),
+        "link": text_or_none(link),
+        "price": text_or_none(price),
+        "availability": text_or_none(availability),
+        "image_link": text_or_none(image_link),
+        "description": text_or_none(description),
+    }
 
-def generate_google_feed(root):
-    """ينشئ ملف XML متوافق مع Google Merchant"""
-    rss = ET.Element("rss", version="2.0", attrib={"xmlns:g": "http://base.google.com/ns/1.0"})
-    channel = ET.SubElement(rss, "channel")
+def generate_google_feed(xml_text: str) -> Tuple[list, list]:
+    """
+    يعيد (records, skipped) حيث:
+    - records: عناصر صالحة تم استخراجها
+    - skipped: قائمة بأسباب التخطي لكل عنصر لم يملك id صالح
+    """
+    soup = BeautifulSoup(xml_text, 'xml')  # ضروري مع namespaces مثل g: [web:6][web:9]
+    records = []
+    skipped = []
 
-    ET.SubElement(channel, "title").text = "اعلانات العرب شريف سلامة"
-    ET.SubElement(channel, "link").text = SITE_BASE_URL
-    ET.SubElement(channel, "description").text = "تغذية المنتجات لمتجر السعودية - اعلانات العرب شريف سلامة"
+    # التأكد من وجود تصريح namespace في الجذر يساعد على صحة الفيد عند المصدر [web:16][web:18]
+    # لكن BeautifulSoup لا يتطلب تسجيل namespace بالبحث النصي "g:tag" [web:9]
+    for idx, item in enumerate(iter_entries(soup), start=1):
+        data = extract_fields(item)
+        if not data["id"]:
+            skipped.append(f"Entry #{idx} skipped: missing id (g:id/id/title/link).")
+            continue
+        records.append(data)
 
-    for item in root.findall("./channel/item"):
-        product_id = item.find("g:id").text.strip()
-        title = item.find("title").text.strip()
-        description = item.find("description").text.strip()
-        price = item.find("g:price").text.strip()
-        image = item.find("g:image_link").text.strip()
-        brand = item.find("g:brand").text.strip() if item.find("g:brand") is not None else "Brand"
-        category = item.find("g:google_product_category").text.strip() if item.find("g:google_product_category") is not None else "0"
-
-        # إنشاء صفحة المنتج
-        generate_product_page(product_id, title, description, image, price)
-
-        # بناء عنصر XML جديد
-        xml_item = ET.SubElement(channel, "item")
-        ET.SubElement(xml_item, "g:id").text = product_id
-        ET.SubElement(xml_item, "title").text = title
-        ET.SubElement(xml_item, "link").text = f"{SITE_BASE_URL}/product/{product_id}"
-        ET.SubElement(xml_item, "description").text = description
-        ET.SubElement(xml_item, "g:price").text = price
-        ET.SubElement(xml_item, "g:availability").text = "in stock"
-        ET.SubElement(xml_item, "g:condition").text = "new"
-        ET.SubElement(xml_item, "g:image_link").text = f"{SITE_BASE_URL}/uploads/{os.path.basename(image)}"
-        ET.SubElement(xml_item, "g:brand").text = brand
-        ET.SubElement(xml_item, "g:google_product_category").text = category
-
-    tree = ET.ElementTree(rss)
-    tree.write("products-feed.xml", encoding="utf-8", xml_declaration=True)
-    print("✅ تم إنشاء ملف products-feed.xml بنجاح.")
+    return records, skipped
 
 def main():
-    root = fetch_easyorders_feed()
-    generate_google_feed(root)
-    print("🎉 تم تحديث الفيد وإنشاء الصفحات بنجاح.")
+    # مثال: قراءة محتوى XML من stdin في CI أو من ملف
+    # xml_input = open('feed.xml', 'r', encoding='utf-8').read()
+    xml_input = sys.stdin.read()
+
+    print("🔄 جاري جلب ومعالجة الفيد ...")
+
+    records, skipped = generate_google_feed(xml_input)
+
+    # اطبع ملخصاً واضحاً يُفيد في الـ CI
+    print(f"✅ العناصر المعالجة: {len(records)}")
+    print(f"⚠️ العناصر المتخطاة: {len(skipped)}")
+    for msg in skipped[:10]:
+        print(" -", msg)
+
+    # تابع بما يلزمك: كتابة CSV/JSON أو بناء XML جديد لرفعٍ لاحق
+    # هنا مثال طباعة مختصر لكل عنصر
+    for r in records[:5]:
+        print(f"[ID={r['id']}] title={r['title']} price={r['price']} availability={r['availability']}")
 
 if __name__ == "__main__":
     main()
