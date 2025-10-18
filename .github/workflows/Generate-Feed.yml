@@ -2,27 +2,27 @@ name: Update Products Feed
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # يوميًا عند منتصف الليل UTC
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write          # الحد الأدنى المطلوب للدفع
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # قيّد التشغيل على main
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false     # سنمرر GITHUB_TOKEN صراحة عند push
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'         # تثبيت نسخة محددة لثبات البيئة
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -31,14 +31,12 @@ jobs:
 
       - name: Run feed generator
         env:
-          FEED_URL: ${{ secrets.FEED_URL }}  # اختياري: مصدر EasyOrders إن لم يتوفر feed.xml
+          FEED_URL: ${{ secrets.FEED_URL }}
         run: |
           set -e
           python generate_feed.py
-          # تحقق من وجود ملف الفيد الناتج
           test -s products-feed.xml || (echo "products-feed.xml not found or empty" && exit 1)
 
-      # بناء صفحات المنتجات من الفيد والقالب templates/product.html
       - name: Build product pages
         run: |
           set -e
@@ -50,22 +48,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          # إعداد هوية git محلياً فقط
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-
-          # إضافة الملفات الناتجة
           git add products-feed.xml product
-
-          # إنشاء الالتزام فقط عند وجود تغييرات
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-
           git commit -m "[skip ci] Auto-update feed and pages"
-
-          # دفع آمن باستخدام GITHUB_TOKEN إلى نفس الفرع مع إعادة محاولات
           for i in 1 2 3; do
             git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "HEAD:${{ github.ref_name }}" && break || \
             (echo "Push failed (attempt $i). Retrying in 5s..." && sleep 5)
