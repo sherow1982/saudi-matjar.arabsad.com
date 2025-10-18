@@ -13,11 +13,16 @@ jobs:
     - name: تحميل المستودع
       uses: actions/checkout@v3
 
-    - name: جلب الفيد من EasyOrders
-      run: |
-        curl -L "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google" -o products-feed.xml
+    - name: تثبيت Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
 
-    - name: رفع الملف وتحديث الموقع
+    - name: تشغيل سكريبت توليد الفيد
+      run: |
+        python generate_feed.py
+
+    - name: رفع الملف إلى GitHub Pages
       run: |
         git config user.name "GitHub Action"
         git config user.email "actions@github.com"
