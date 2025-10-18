@@ -2,19 +2,47 @@
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>اعلانات العرب شريف سلامة</title>
-    <link>https://saudi-matjar.arabsad.com/</link>
-    <description>تغذية المنتجات لمتجر السعودية</description>
-    
+    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>
+    <description>تغذية المنتجات لمتجر السعودية - اعلانات العرب شريف سلامة</description>
+
     <item>
       <g:id>product1</g:id>
       <title>ماكينة قهوة ذكية متعددة الكبسولات</title>
-      <link>https://saudi-matjar.arabsad.com/products/mebashi-multi-capsule-coffee-machine</link>
-      <description>ماكينة قهوة احترافية تدعم كبسولات متعددة</description>
+      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/products/mebashi-multi-capsule-coffee-machine</link>
+      <description>ماكينة قهوة احترافية تدعم كبسولات متعددة، تصميم أنيق وسريع التحضير بلمسة زر.</description>
       <g:price>399.00 SAR</g:price>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
-      <g:image_link>https://saudi-matjar.arabsad.com/uploads/mebashi.jpg</g:image_link>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mebashi.jpg</g:image_link>
+      <g:brand>Mebashi</g:brand>
+      <g:google_product_category>499955</g:google_product_category>
     </item>
-    
+
+    <item>
+      <g:id>product2</g:id>
+      <title>مكيف هواء محمول صغير</title>
+      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/products/mini-portable-ac</link>
+      <description>مكيف متنقل لتبريد فوري وسهل الاستخدام في أي مكان.</description>
+      <g:price>179.00 SAR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/mini-ac.jpg</g:image_link>
+      <g:brand>CoolAir</g:brand>
+      <g:google_product_category>429</g:google_product_category>
+    </item>
+
+    <item>
+      <g:id>product3</g:id>
+      <title>منظم مقعد السيارة الذكي</title>
+      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/products/car-seat-organizer</link>
+      <description>منظم عملي يحافظ على ترتيب أغراض السيارة ويوفر مساحة إضافية.</description>
+      <g:price>99.00 SAR</g:price>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:image_link>https://sherow1982.github.io/saudi-matjar.arabsad.com/uploads/seat-organizer.jpg</g:image_link>
+      <g:brand>AutoSmart</g:brand>
+      <g:google_product_category>904</g:google_product_category>
+    </item>
+
   </channel>
 </rss>
