@@ -2,34 +2,39 @@ name: Update Products Feed
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # يشغله كل يوم في منتصف الليل UTC
-  workflow_dispatch:      # عشان تقدر تشغله يدويًا من GitHub Actions
+    - cron: '0 0 * * *'   # يوميًا عند منتصف الليل UTC [web:59][web:64]
+  workflow_dispatch:       # تشغيل يدوي من Actions [web:49]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # السماح بالدفع إلى المستودع من داخل العمل [web:61][web:66]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false  # للسماح بإعداد بيانات git الخاصة بنا قبل push [web:52][web:53]
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.x'       # تثبيت بايثون عبر الأكشن الرسمي [web:47][web:68]
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests bs4 lxml   # bs4/lxml مطلوبة للـ XML parsing كما في الكود [web:47][web:6]
 
       - name: Run feed generator
-        run: python generate_feed.py
+        run: |
+          python generate_feed.py        # تأكد أن السكربت يكتب ملف products-feed.xml في الجذر
 
       - name: Commit and push updated feed
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add products-feed.xml
-          git commit -m "Auto-update feed"
+          git commit -m "Auto-update feed" || echo "No changes to commit"
           git push
