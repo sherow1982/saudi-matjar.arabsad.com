@@ -1,16 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-import html
 
 FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google"
 OUTPUT_FILE = "products-feed.xml"
-
-def sanitize(text):
-    """تنظيف النص من الرموز اللي ممكن تكسر XML"""
-    if not text:
-        return ""
-    text = html.escape(text.strip())
-    return text
 
 def generate_feed():
     print("Fetching EasyOrders feed...")
@@ -20,7 +12,7 @@ def generate_feed():
     soup = BeautifulSoup(response.text, "xml")
     items = soup.find_all("item")
 
-    print(f"Fetched {len(items)} products. Generating Google Merchant feed...")
+    print(f"Fetched {len(items)} products. Generating new feed...")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -28,24 +20,19 @@ def generate_feed():
         f.write("  <channel>\n")
         f.write("    <title>اعلانات العرب شريف سلامة</title>\n")
         f.write("    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>\n")
-        f.write("    <description>منتجات متجر اعلانات العرب - السعودية</description>\n\n")
+        f.write("    <description>تغذية المنتجات لمتجر السعودية</description>\n\n")
 
-        for index, item in enumerate(items, start=1):
-            title = sanitize(item.find("title").text if item.find("title") else "")
-            link = sanitize(item.find("link").text if item.find("link") else "")
-            image = sanitize(item.find("g:image_link").text if item.find("g:image_link") else "")
-            price = sanitize(item.find("g:price").text if item.find("g:price") else "")
-            desc = sanitize(item.find("description").text if item.find("description") else "")
+        for item in items:
+            title = item.find("title").text if item.find("title") else ""
+            link = item.find("link").text if item.find("link") else ""
+            image = item.find("g:image_link").text if item.find("g:image_link") else ""
+            price = item.find("g:price").text if item.find("g:price") else ""
+            desc = item.find("description").text if item.find("description") else ""
 
-            # تعديل الدومين الجديد
-            link = link.replace("https://tagerksa.arabsad.com", "https://tagerksa.myeasyorders.com")
-
-            # تأكد أن السعر بصيغة صحيحة
-            if "SAR" not in price:
-                price = price.strip() + " SAR"
+            # استبدال الدومين القديم بالجديد
+            link = link.replace("https://tagerksa.arabsad.com", "https://sherow1982.github.io/saudi-matjar.arabsad.com")
 
             f.write("    <item>\n")
-            f.write(f"      <g:id>{index}</g:id>\n")
             f.write(f"      <title>{title}</title>\n")
             f.write(f"      <link>{link}</link>\n")
             f.write(f"      <g:image_link>{image}</g:image_link>\n")
@@ -53,12 +40,11 @@ def generate_feed():
             f.write(f"      <g:price>{price}</g:price>\n")
             f.write("      <g:availability>in stock</g:availability>\n")
             f.write("      <g:condition>new</g:condition>\n")
-            f.write("      <g:brand>اعلانات العرب</g:brand>\n")
             f.write("    </item>\n")
 
         f.write("  </channel>\n</rss>\n")
 
-    print("✅ products-feed.xml generated successfully and XML-safe!")
+    print("✅ feed.xml generated successfully!")
 
 if __name__ == "__main__":
     generate_feed()
