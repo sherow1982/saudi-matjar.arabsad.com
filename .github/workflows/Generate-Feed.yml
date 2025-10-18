@@ -1,50 +1,35 @@
-import requests
-from bs4 import BeautifulSoup
+name: Update Products Feed
 
-FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google"
-OUTPUT_FILE = "products-feed.xml"
+on:
+  schedule:
+    - cron: '0 0 * * *'  # يشغله كل يوم في منتصف الليل UTC
+  workflow_dispatch:      # عشان تقدر تشغله يدويًا من GitHub Actions
 
-def generate_feed():
-    print("Fetching EasyOrders feed...")
-    response = requests.get(FEED_URL)
-    response.raise_for_status()
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    soup = BeautifulSoup(response.text, "xml")
-    items = soup.find_all("item")
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    print(f"Fetched {len(items)} products. Generating new feed...")
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        f.write('<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n')
-        f.write("  <channel>\n")
-        f.write("    <title>اعلانات العرب شريف سلامة</title>\n")
-        f.write("    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>\n")
-        f.write("    <description>تغذية المنتجات لمتجر السعودية</description>\n\n")
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
-        for item in items:
-            title = item.find("title").text if item.find("title") else ""
-            link = item.find("link").text if item.find("link") else ""
-            image = item.find("g:image_link").text if item.find("g:image_link") else ""
-            price = item.find("g:price").text if item.find("g:price") else ""
-            desc = item.find("description").text if item.find("description") else ""
+      - name: Run feed generator
+        run: python generate_feed.py
 
-            # استبدال الدومين القديم بالجديد
-            link = link.replace("https://tagerksa.arabsad.com", "https://sherow1982.github.io/saudi-matjar.arabsad.com")
-
-            f.write("    <item>\n")
-            f.write(f"      <title>{title}</title>\n")
-            f.write(f"      <link>{link}</link>\n")
-            f.write(f"      <g:image_link>{image}</g:image_link>\n")
-            f.write(f"      <description>{desc}</description>\n")
-            f.write(f"      <g:price>{price}</g:price>\n")
-            f.write("      <g:availability>in stock</g:availability>\n")
-            f.write("      <g:condition>new</g:condition>\n")
-            f.write("    </item>\n")
-
-        f.write("  </channel>\n</rss>\n")
-
-    print("✅ feed.xml generated successfully!")
-
-if __name__ == "__main__":
-    generate_feed()
+      - name: Commit and push updated feed
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add products-feed.xml
+          git commit -m "Auto-update feed"
+          git push
