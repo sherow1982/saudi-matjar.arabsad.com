@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>اعلانات العرب شريف سلامة</title>
+    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>
+    <description>منتجات متجر اعلانات العرب</description>
+
+    <item>
+      <title>اسم المنتج الأول</title>
+      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/product1</link>
+      <description>وصف المنتج الأول هنا</description>
+      <g:image_link>https://example.com/product1.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>99 SAR</g:price>
+      <g:condition>new</g:condition>
+      <g:id>1</g:id>
+      <g:brand>اعلانات العرب</g:brand>
+    </item>
+
+    <item>
+      <title>اسم المنتج الثاني</title>
+      <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/product2</link>
+      <description>وصف المنتج الثاني هنا</description>
+      <g:image_link>https://example.com/product2.jpg</g:image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>149 SAR</g:price>
+      <g:condition>new</g:condition>
+      <g:id>2</g:id>
+      <g:brand>اعلانات العرب</g:brand>
+    </item>
+
+  </channel>
+</rss>
