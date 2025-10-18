@@ -1,31 +1,33 @@
-name: تحديث فيد المنتجات تلقائيًا
+name: Update Product Feed
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # يحدث كل 6 ساعات
-  workflow_dispatch:
+    - cron: "0 */12 * * *"  # يحدث كل 12 ساعة
+  workflow_dispatch:  # تقدر تشغله يدوي
 
 jobs:
-  update-feed:
+  update:
     runs-on: ubuntu-latest
 
     steps:
-    - name: تحميل المستودع
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: تثبيت Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
 
-    - name: تشغيل سكريبت توليد الفيد
-      run: |
-        python generate_feed.py
+      - name: Install dependencies
+        run: pip install requests
 
-    - name: رفع الملف إلى GitHub Pages
-      run: |
-        git config user.name "GitHub Action"
-        git config user.email "actions@github.com"
-        git add products-feed.xml
-        git commit -m "تحديث تلقائي للفيد"
-        git push
+      - name: Run feed generator
+        run: python generate_feed.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add products-feed.xml
+          git commit -m "Auto-update feed"
+          git push
