@@ -38,6 +38,7 @@ jobs:
           # تحقق من وجود ملف الفيد الناتج
           test -s products-feed.xml || (echo "products-feed.xml not found or empty" && exit 1)
 
+      # بناء صفحات المنتجات من الفيد والقالب templates/product.html
       - name: Build product pages
         run: |
           set -e
