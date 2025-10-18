@@ -2,39 +2,45 @@ name: Update Products Feed
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # يوميًا عند منتصف الليل UTC [web:59][web:64]
-  workflow_dispatch:       # تشغيل يدوي من Actions [web:49]
+    - cron: '0 0 * * *'   # يوميًا عند منتصف الليل UTC
+  workflow_dispatch:       # تشغيل يدوي من Actions
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # السماح بالدفع إلى المستودع من داخل العمل [web:61][web:66]
+      contents: write      # السماح بالدفع إلى المستودع من داخل العمل
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false  # للسماح بإعداد بيانات git الخاصة بنا قبل push [web:52][web:53]
+          # الإبقاء على الاعتماديات الافتراضية جيد في معظم الحالات
+          # وإن واجهت تعارضًا، يمكن ضبطه على false، ثم استخدام GITHUB_TOKEN يدويًا.
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'       # تثبيت بايثون عبر الأكشن الرسمي [web:47][web:68]
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests bs4 lxml   # bs4/lxml مطلوبة للـ XML parsing كما في الكود [web:47][web:6]
+          pip install requests bs4 lxml
 
       - name: Run feed generator
         run: |
-          python generate_feed.py        # تأكد أن السكربت يكتب ملف products-feed.xml في الجذر
+          # شغّل السكربت وتأكد أنه يكتب products-feed.xml في جذر المستودع
+          python generate_feed.py
 
       - name: Commit and push updated feed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add products-feed.xml
           git commit -m "Auto-update feed" || echo "No changes to commit"
+          # الدفع باستخدام الاعتماديات التي وفرها checkout (أو GITHUB_TOKEN)
           git push
