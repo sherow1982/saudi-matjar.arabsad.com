@@ -1,51 +1,72 @@
-from bs4 import BeautifulSoup
+name: Update Products Feed
 
-def text_or_none(tag):
-    return tag.get_text(strip=True) if tag else None
+on:
+  schedule:
+    - cron: '0 0 * * *'   # يوميًا عند منتصف الليل UTC
+  workflow_dispatch:
 
-def first_text(*vals):
-    for v in vals:
-        if v:
-            return v
-    return None
+permissions:
+  contents: write          # الحد الأدنى المطلوب للدفع
 
-def generate_google_feed(root_xml: str):
-    soup = BeautifulSoup(root_xml, 'xml')  # مهم مع g: namespace [web:6]
-    items = soup.find_all('item') or soup.find_all('entry')
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'  # قيّد التشغيل على main
 
-    records = []
-    skipped = []
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false     # سنمرر GITHUB_TOKEN صراحة عند push
 
-    for idx, item in enumerate(items, 1):
-        gid = text_or_none(item.find('g:id'))
-        plain_id = text_or_none(item.find('id'))
-        title = text_or_none(item.find('g:title') or item.find('title'))
-        link = text_or_none(item.find('g:link') or item.find('link'))
-        price = text_or_none(item.find('g:price') or item.find('price'))
-        availability = text_or_none(item.find('g:availability') or item.find('availability'))
-        image_link = text_or_none(item.find('g:image_link') or item.find('image_link') or item.find('image'))
-        desc = text_or_none(item.find('g:description') or item.find('description') or item.find('summary'))
-        brand = text_or_none(item.find('g:brand') or item.find('brand'))
-        condition = text_or_none(item.find('g:condition') or item.find('condition'))
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'         # تثبيت نسخة محددة لثبات البيئة
 
-        product_id = first_text(gid, plain_id, title, link)
-        required_missing = [k for k, v in {
-            "title": title, "link": link, "image_link": image_link,
-            "price": price, "availability": availability
-        }.items() if not v]
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests bs4 lxml
 
-        if not product_id or required_missing:
-            skipped.append(f"Entry #{idx} skipped: missing id or {required_missing}")
-            continue
+      - name: Run feed generator
+        env:
+          FEED_URL: ${{ secrets.FEED_URL }}  # اختياري: مصدر EasyOrders إن لم يتوفر feed.xml
+        run: |
+          set -e
+          python generate_feed.py
+          # تحقق من وجود ملف الفيد الناتج
+          test -s products-feed.xml || (echo "products-feed.xml not found or empty" && exit 1)
 
-        records.append({
-            "id": product_id, "title": title, "link": link, "price": price,
-            "availability": availability, "image_link": image_link,
-            "description": desc or title, "brand": brand, "condition": condition or "new",
-        })
+      # بناء صفحات المنتجات من الفيد والقالب templates/product.html
+      - name: Build product pages
+        run: |
+          set -e
+          python build_pages.py
+          test -d product || (echo "No product pages generated" && exit 1)
 
-    print(f"✅ processed={len(records)} ⚠️ skipped={len(skipped)}")
-    for m in skipped[:20]:
-        print(" -", m)
+      - name: Commit and push updated feed and pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # إعداد هوية git محلياً فقط
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-    # ... أكمل كتابة products-feed.xml كما سبق دون افتراض وجود .text على عناصر مفقودة
+          # إضافة الملفات الناتجة
+          git add products-feed.xml product
+
+          # إنشاء الالتزام فقط عند وجود تغييرات
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "[skip ci] Auto-update feed and pages"
+
+          # دفع آمن باستخدام GITHUB_TOKEN إلى نفس الفرع مع إعادة محاولات
+          for i in 1 2 3; do
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "HEAD:${{ github.ref_name }}" && break || \
+            (echo "Push failed (attempt $i). Retrying in 5s..." && sleep 5)
+          done
