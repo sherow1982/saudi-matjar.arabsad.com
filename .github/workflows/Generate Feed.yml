@@ -1,32 +1,64 @@
-name: Generate Feed Automatically
+import requests
+from bs4 import BeautifulSoup
+import html
 
-on:
-  schedule:
-    - cron: "0 */12 * * *"  # يحدث كل 12 ساعة
-  workflow_dispatch:
+FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/437a38bb829245a3934e1d2fe153b417/channel/google"
+OUTPUT_FILE = "products-feed.xml"
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+def sanitize(text):
+    """تنظيف النص من الرموز اللي ممكن تكسر XML"""
+    if not text:
+        return ""
+    text = html.escape(text.strip())
+    return text
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+def generate_feed():
+    print("Fetching EasyOrders feed...")
+    response = requests.get(FEED_URL)
+    response.raise_for_status()
 
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4
+    soup = BeautifulSoup(response.text, "xml")
+    items = soup.find_all("item")
 
-      - name: Generate feed
-        run: python generate_feed.py
+    print(f"Fetched {len(items)} products. Generating Google Merchant feed...")
 
-      - name: Commit and push feed
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add products-feed.xml
-          git commit -m "Auto-update feed"
-          git push
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n')
+        f.write("  <channel>\n")
+        f.write("    <title>اعلانات العرب شريف سلامة</title>\n")
+        f.write("    <link>https://sherow1982.github.io/saudi-matjar.arabsad.com/</link>\n")
+        f.write("    <description>منتجات متجر اعلانات العرب - السعودية</description>\n\n")
+
+        for index, item in enumerate(items, start=1):
+            title = sanitize(item.find("title").text if item.find("title") else "")
+            link = sanitize(item.find("link").text if item.find("link") else "")
+            image = sanitize(item.find("g:image_link").text if item.find("g:image_link") else "")
+            price = sanitize(item.find("g:price").text if item.find("g:price") else "")
+            desc = sanitize(item.find("description").text if item.find("description") else "")
+
+            # تعديل الدومين الجديد
+            link = link.replace("https://tagerksa.arabsad.com", "https://tagerksa.myeasyorders.com")
+
+            # تأكد أن السعر بصيغة صحيحة
+            if "SAR" not in price:
+                price = price.strip() + " SAR"
+
+            f.write("    <item>\n")
+            f.write(f"      <g:id>{index}</g:id>\n")
+            f.write(f"      <title>{title}</title>\n")
+            f.write(f"      <link>{link}</link>\n")
+            f.write(f"      <g:image_link>{image}</g:image_link>\n")
+            f.write(f"      <description>{desc}</description>\n")
+            f.write(f"      <g:price>{price}</g:price>\n")
+            f.write("      <g:availability>in stock</g:availability>\n")
+            f.write("      <g:condition>new</g:condition>\n")
+            f.write("      <g:brand>اعلانات العرب</g:brand>\n")
+            f.write("    </item>\n")
+
+        f.write("  </channel>\n</rss>\n")
+
+    print("✅ products-feed.xml generated successfully and XML-safe!")
+
+if __name__ == "__main__":
+    generate_feed()
