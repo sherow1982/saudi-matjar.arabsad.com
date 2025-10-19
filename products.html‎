@@ -1,0 +1,16 @@
+<!-- /products.html -->
+---
+layout: default
+title: "المنتجات"
+permalink: /products/
+---
+
+<h1>المنتجات</h1>
+<ul>
+  {% for p in site.products %}
+  <li>
+    <a href="{{ p.url | relative_url }}">{{ p.title }}</a>
+    {% if p.price %} — {{ p.price }} {{ p.currency | default: "SAR" }}{% endif %}
+  </li>
+  {% endfor %}
+</ul>
