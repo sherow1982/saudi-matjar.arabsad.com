@@ -1,8 +1,11 @@
 {
-  "name": "page-sync",
+  "name": "site-automation",
   "private": true,
   "type": "module",
   "scripts": {
-    "fetch:pages": "node scripts/fetch-pages.mjs"
+    "gen:sitemap": "node scripts/generate-sitemap.mjs"
+  },
+  "devDependencies": {
+    "fast-xml-parser": "^4.4.0"
   }
 }
