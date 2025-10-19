@@ -46,12 +46,12 @@
 </head>
 <body>
 
-  <!-- شريط التنقل داخل body مع مسارات صحيحة بالنسبة لمسار المستودع -->
+  <!-- هيدر الروابط (ضعه قبل المنتجات) -->
   <nav class="top-nav" aria-label="روابط الصفحات">
     <div class="wrap">
       <span class="brand">روابط مهمة:</span>
       <ul>
-        <!-- اختر أحد النمطين التاليين: نسبية (موصى بها من الصفحة الرئيسية) -->
+        <!-- روابط نسبية تعمل من index.html في الجذر -->
         <li><a href="pages/shipping-policy.html">سياسة الشحن</a></li>
         <li><a href="pages/who-we-are.html">من نحن</a></li>
         <li><a href="pages/terms-and-conditions.html">شروط الاستخدام</a></li>
@@ -60,36 +60,36 @@
         <li><a href="pages/privacy-policy.html">سياسات الخصوصية</a></li>
         <li><a href="pages/contact-us.html">اتصل بنا</a></li>
         <li><a href="pages/refund-policy.html">سياسة الاستبدال والاسترجاع</a></li>
-
-        <!-- أو مطلقة مع بادئة المستودع لو أردت استعمالها في صفحات فرعية:
-        <li><a href="/saudi-matjar.arabsad.com/pages/shipping-policy.html">سياسة الشحن</a></li>
-        ... الخ
-        -->
       </ul>
     </div>
   </nav>
 
+  <!-- عنوان وبحث -->
   <h1 class="header">متجر السعودية</h1>
   <input type="text" id="search" placeholder="ابحث عن منتج...">
 
+  <!-- شبكة المنتجات -->
   <section id="products">
     <p class="loading-msg">جارٍ تحميل المنتجات...</p>
   </section>
 
+  <!-- زر واتساب -->
   <a id="whatsappBtn" href="https://wa.me/201110760081" target="_blank" rel="noopener noreferrer" class="whatsapp-btn" aria-label="تواصل واتساب">راسلنا واتساب الآن</a>
 
   <script>
-    // ثوابت مهمة: SITE_BASE يجب أن يطابق مسار GitHub Pages
+    // إعدادات
     const FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
     const SITE_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com";
     const ITEMS_PER_LOAD = 12;
 
+    // حالة
     let productsData = [], filteredData = [], currentIndex = 0;
 
+    // أدوات
     function makeSlug(s){
       s=(s||"").trim().toLowerCase();
-      s=s.replace(/[^a-z0-9\-]+/g,"-");
-      s=s.replace(/\-+/g,"-").replace(/^\-|\-$/g,"");
+      s=s.replace(/[^a-z0-9\\-]+/g,"-");
+      s=s.replace(/\\-+/g,"-").replace(/^\\-|\\-$/g,"");
       return s || "item";
     }
     function currencySAR(v){
@@ -111,10 +111,10 @@
         const title = item.querySelector("title")?.textContent?.trim() || "منتج بدون اسم";
         const gid = item.querySelector("g\\:id, id")?.textContent?.trim() || title;
         const slug = makeSlug(gid);
-        const pageUrl = `${SITE_BASE}/product/${slug}/`;
+        const pageUrl = SITE_BASE + "/product/" + slug + "/";
         const image = item.querySelector("g\\:image_link, image_link, image")?.textContent?.trim() || "";
         const priceRaw = item.querySelector("g\\:price, price")?.textContent?.trim() || "0";
-        const price = parseFloat((priceRaw||"0").replace(/[^\d.]/g,"")) || 0;
+        const price = parseFloat((priceRaw||"0").replace(/[^\\d.]/g,"")) || 0;
         data.push({ title, link: pageUrl, image, price, slug });
       });
       return data;
