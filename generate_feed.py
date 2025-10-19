@@ -5,12 +5,12 @@ import os, re, sys, requests
 from bs4 import BeautifulSoup
 
 BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
-# اجعل القيمة الافتراضية تعمل حتى لو كانت FEED_URL فارغة
+# قيمة افتراضية تعمل حتى لو كانت FEED_URL فارغة
 EASYORDERS_FEED = os.environ.get("FEED_URL") or "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
 
 def make_slug(s: str) -> str:
     s = (s or "").strip().lower()
-    s = re.sub(r"[^a-z0-9\\-]+", "-", s)
+    s = re.sub(r"[^a-z0-9\-]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")
     return s or "item"
 
@@ -37,7 +37,7 @@ def build_output(items):
     for it in items:
         gid = it.get("gid")
         title = it.get("title")
-        link = it.get("link")
+        link = it.get("link")  # رابط EasyOrders الأصلي القادم من الفيد المصدر
         price = it.get("price")
         availability = it.get("availability")
         image = it.get("image")
@@ -57,6 +57,7 @@ def build_output(items):
         parts.append("    <item>")
         parts.append(f"      <g:id>{slug}</g:id>")
         parts.append(f"      <title><![CDATA[{title}]]></title>")
+        # نُبقي <link> يشير لصفحة GitHub Pages
         parts.append(f"      <link>{page_url}</link>")
         parts.append(f"      <guid>{slug}</guid>")
         parts.append(f"      <description><![CDATA[{desc}]]></description>")
@@ -70,6 +71,8 @@ def build_output(items):
             parts.append(f"      <g:google_product_category>{gpc}</g:google_product_category>")
         if ptype:
             parts.append(f"      <g:product_type><![CDATA[{ptype}]]></g:product_type>")
+        # نضيف رابط الشراء الأصلي ليستخدمه build_pages.py في زر "اشترِ الآن"
+        parts.append(f"      <g:link_source><![CDATA[{link or ''}]]></g:link_source>")
         parts.append("    </item>")
         kept += 1
 
@@ -87,7 +90,7 @@ def main():
 
     soup = BeautifulSoup(raw, "xml")
 
-    # دعم كل من RSS وAtom قدر الإمكان
+    # دعم RSS أو Atom
     raw_items = soup.find_all("item")
     if not raw_items:
         raw_items = soup.find_all("entry")
