@@ -41,12 +41,12 @@
     .product-image{width:100%;height:190px;object-fit:contain;margin-bottom:8px;background:#fff;border:1px solid #eee;border-radius:10px}
     .title{font-weight:800;margin:.4rem 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;min-height:48px;line-height:1.3}
 
-    /* price block emphasized */
+    /* price emphasized */
     .price{
       display:inline-block;
       margin:6px 0 8px;
       padding:6px 10px;
-      background:#ecfdf5; /* light green bg for contrast */
+      background:#ecfdf5;
       color:var(--price);
       border:1px solid #bbf7d0;
       border-radius:10px;
@@ -117,16 +117,36 @@
     let filtered = [];
     let cursor = 0;
 
-    function slugify(s){ s=(s||"").trim().toLowerCase(); s=s.replace(/[^a-z0-9\\-]+/g,"-").replace(/\\-+/g,"-").replace(/^\\-|\\-$/g,""); return s || "item"; }
-    function parsePrice(raw){
-      if(!raw) return 0;
-      const num = parseFloat(String(raw).replace(/[^\\d.]/g,""));
-      return isFinite(num) ? num : 0;
+    function slugify(s){
+      s = (s || "").trim().toLowerCase();
+      s = s.replace(/[^a-z0-9\-]+/g,"-").replace(/\-+/g,"-").replace(/^\-|\-$/g,"");
+      return s || "item";
     }
+
+    // robust parser for varied price formats (e.g., "123.45 SAR", "123,45", "١٢٣٫٤٥")
+    function parsePrice(raw){
+      if(raw == null) return NaN;
+      let s = String(raw).trim();
+      // keep digits, dot, comma, Arabic decimal/grouping marks
+      s = s.replace(/[^\d.,٫٬]/g, "");
+      // unify Arabic marks to dot
+      s = s.replace(/[٫٬]/g, ".");
+      // handle cases with both comma and dot: assume comma thousands
+      if (s.includes(",") && s.includes(".")) {
+        s = s.replace(/,/g, "");
+      } else if (s.includes(",")) {
+        // treat comma as decimal
+        s = s.replace(/,/g, ".");
+      }
+      const n = parseFloat(s);
+      return isFinite(n) ? n : NaN;
+    }
+
     function formatSAR(v){
-      if(!v || !isFinite(v)) return "—";
+      if(!isFinite(v)) return "—";
       return Number(v).toFixed(1) + " ر.س";
     }
+
     function chooseCategory(title, explicit){
       const cat = (explicit || "").trim();
       if(cat) return cat;
@@ -152,7 +172,7 @@
         const slug = slugify(gid);
         const link = SITE_BASE + "/product/" + slug + "/";
         const image = item.querySelector("g\\:image_link, image_link, image")?.textContent?.trim() || "";
-        const priceRaw = item.querySelector("g\\:price, price")?.textContent?.trim() || "0";
+        const priceRaw = item.querySelector("g\\:price, price")?.textContent?.trim() || "";
         const price = parsePrice(priceRaw);
         const explicitCat = item.querySelector("g\\:product_type, product_type, category")?.textContent?.trim() || "";
         const category = chooseCategory(title, explicitCat);
@@ -182,7 +202,10 @@
           <a href="${waHref}" target="_blank" rel="noopener noreferrer" class="btn btn-wa">واتساب</a>
         </div>
       `;
-      queueMicrotask(()=>{ const img = el.querySelector("img"); img.onerror = ()=>{ img.src = "https://via.placeholder.com/400x300?text=No+Image"; }; });
+      queueMicrotask(()=>{
+        const img = el.querySelector("img");
+        img.onerror = ()=>{ img.src = "https://via.placeholder.com/400x300?text=No+Image"; };
+      });
       return el;
     }
 
