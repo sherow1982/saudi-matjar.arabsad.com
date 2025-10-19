@@ -19,13 +19,13 @@ def get_text(tag):
 
 def make_slug(s: str) -> str:
     s = (s or "").strip().lower()
-    s = re.sub(r"[^a-z0-9\-]+", "-", s)
+    s = re.sub(r"[^a-z0-9\\-]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")
     return s or "item"
 
 def price_to_number(price: str) -> str:
     if not price: return "0"
-    m = re.search(r"([0-9]+(?:\.[0-9]+)?)", price)
+    m = re.search(r"([0-9]+(?:\\.[0-9]+)?)", price)
     return m.group(1) if m else "0"
 
 def availability_schema(av: str) -> str:
@@ -35,10 +35,12 @@ def availability_schema(av: str) -> str:
         "preorder": "https://schema.org/PreOrder",
         "backorder": "https://schema.org/BackOrder",
     }
-    return json.dumps(m.get((av or "").strip().lower(), "https://schema.org/InStock"))
+    import json as _json
+    return _json.dumps(m.get((av or "").strip().lower(), "https://schema.org/InStock"))
 
 def to_json_val(s: str) -> str:
-    return json.dumps(s or "")
+    import json as _json
+    return _json.dumps(s or "")
 
 def render_template(tpl_path: str, ctx: dict) -> str:
     with open(tpl_path, "r", encoding="utf-8") as f:
