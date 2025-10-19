@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os, re
+import os
+import re
 from bs4 import BeautifulSoup
 
-# مسارات الفيد الممكنة
+# أين يوجد الفيد الناتج
 FEED_PATHS = ["products-feed.xml", "feed.xml"]
 
-# نطاق موقع GitHub Pages
+# نطاق GitHub Pages لموقعك
 BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
 
 
 def load_feed():
+    """يحمل ملف الفيد من أحد المسارات المعروفة"""
     for p in FEED_PATHS:
         if os.path.exists(p):
             with open(p, "r", encoding="utf-8") as f:
@@ -23,10 +25,10 @@ def T(tag):
     return tag.get_text(strip=True) if tag else None
 
 
-# توحيد الـ slug مع generate_feed.py
 def make_slug(s: str) -> str:
+    """توحيد الـ slug تمامًا كما في generate_feed.py وindex.html"""
     s = (s or "").strip().lower()
-    s = re.sub(r"[^a-z0-9\\-]+", "-", s)
+    s = re.sub(r"[^a-z0-9\-]+", "-", s)
     s = re.sub(r"-{2,}", "-", s).strip("-")
     return s or "item"
 
@@ -34,7 +36,7 @@ def make_slug(s: str) -> str:
 def price_to_number(price: str) -> str:
     if not price:
         return "0"
-    m = re.search(r"([0-9]+(?:\\.[0-9]+)?)", price)
+    m = re.search(r"([0-9]+(?:\.[0-9]+)?)", price)
     return m.group(1) if m else "0"
 
 
@@ -55,6 +57,7 @@ def to_json_val(s: str) -> str:
 
 
 def render_template(tpl_path: str, ctx: dict) -> str:
+    """استبدال بسيط لقيم {{ key }} داخل القالب"""
     with open(tpl_path, "r", encoding="utf-8") as f:
         html = f.read()
     for k, v in ctx.items():
@@ -72,6 +75,7 @@ def main():
 
     count = 0
     for it in items:
+        # الحقول الأساسية من الفيد الناتج
         pid = T(it.find("g:id")) or T(it.find("id")) or ""
         title = T(it.find("title")) or pid or "Product"
         desc = T(it.find("description")) or title
@@ -81,15 +85,16 @@ def main():
         brand = T(it.find("g:brand")) or ""
         img = T(it.find("g:image_link")) or ""
 
-        # رابط الشراء الأصلي من الفيد:
-        # الأولوية لحقل g:link_source إن أضفته في generate_feed.py، ثم <link> كبديل.
-        buy_src = T(it.find("g:link_source"))
-        link = T(it.find("link"))
-        slug = make_slug(pid or title or link)
+        # روابط:
+        # - g:link_source: اختياري نضيفه في generate_feed.py ليحفظ رابط EasyOrders الأصلي
+        # - link: قد يكون يشير لصفحة GitHub Pages في الفيد الناتج
+        buy_src = T(it.find("g:link_source"))  # إن وُجد فهو الأولوية للشراء
+        link_tag_val = T(it.find("link"))      # الموجود داخل الفيد الناتج
+        slug = make_slug(pid or title or link_tag_val)
         page_url = f"{BASE}/product/{slug}/"
-        buy_url = buy_src or link or page_url  # احتياطيًا صفحة GitHub إن لم يوجد رابط أصلي
+        buy_url = buy_src or link_tag_val or page_url  # احتياطيًا الصفحة المحلية
 
-        # تحضير سياق القالب
+        # تجهيز سياق القالب
         ctx = {
             "title": title,
             "description": desc,
@@ -99,7 +104,7 @@ def main():
             "brand": brand,
             "image_link": img,
 
-            # زر الشراء يذهب للمتجر الأصلي
+            # زر الشراء يتجه لصفحة EasyOrders الأصلية إن توفر link_source أو link الأصلي
             "buy_url": buy_url,
 
             # JSON-LD
@@ -112,8 +117,8 @@ def main():
             "availability_schema": availability_schema(avail),
         }
 
+        # توليد الصفحة
         html = render_template("templates/product.html", ctx)
-
         out_dir = os.path.join("product", slug)
         os.makedirs(out_dir, exist_ok=True)
         with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
