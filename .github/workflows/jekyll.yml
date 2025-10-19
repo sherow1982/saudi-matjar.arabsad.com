@@ -21,24 +21,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # إعداد روبي وتمكين كاش Bundler لضمان بيئة بناء ثابتة
+      # إعداد روبي بدون Bundler (لا يوجد Gemfile)
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
-          bundler-cache: true
-          cache-version: 0
+          bundler-cache: false
+
+      # تثبيت Jekyll مباشرة كجيم
+      - name: Install Jekyll
+        run: |
+          gem install jekyll -N
 
       # تهيئة Pages للحصول على base_path وغيره
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
 
-      # بناء الموقع باستخدام Jekyll
-      # ملاحظة: إذا كان موقعك يُنشر على الجذر وليس مسار فرعي،
-      # ويمكن أن يسبب --baseurl مشاكل بالروابط، احذف الوسيطة بالكامل.
-      - name: Build with Jekyll
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+      # بناء الموقع باستخدام Jekyll بدون Bundler
+      # إذا كان موقعك على الجذر، ويمكن أن يسبب --baseurl مشاكل، احذفها.
+      - name: Build with Jekyll (no Gemfile)
+        run: jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
 
