@@ -32,9 +32,17 @@ body{font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;ba
 
 <script>
 const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
+const SITE_BASE="https://sherow1982.github.io/saudi-matjar.arabsad.com";
 const ITEMS_PER_LOAD=12;
 
 let productsData=[], filteredData=[], currentIndex=0;
+
+function makeSlug(s){
+  s=(s||"").trim().toLowerCase();
+  s=s.replace(/[^a-z0-9\-]+/g,"-");
+  s=s.replace(/\-+/g,"-").replace(/^\-|\-$/g,"");
+  return s || "item";
+}
 
 async function fetchFeed(){
   const res=await fetch(FEED_URL,{headers:{'Accept':'application/xml,text/xml;q=0.9,*/*;q=0.8'}});
@@ -47,12 +55,13 @@ async function fetchFeed(){
   const data=[];
   items.forEach(item=>{
     const title=item.querySelector("title")?.textContent?.trim()||"منتج بدون اسم";
-    // استخدم الرابط كما هو من EasyOrders (صفحة الشراء الأصلية) لصفحة الهبوط
-    const link=item.querySelector("link")?.textContent?.trim()||"#";
-    const image=item.querySelector("g\\:image_link, image_link")?.textContent?.trim()||"";
+    const gid = item.querySelector("g\\:id, id")?.textContent?.trim() || title;
+    const slug = makeSlug(gid);
+    const pageUrl = `${SITE_BASE}/product/${slug}/`;
+    const image=item.querySelector("g\\:image_link, image_link, image")?.textContent?.trim()||"";
     const priceRaw=item.querySelector("g\\:price, price")?.textContent?.trim()||"0";
     const price=parseFloat((priceRaw||"0").replace(/[^\d.]/g,""))||0;
-    data.push({title,link,image,price});
+    data.push({title,link:pageUrl,image,price,slug});
   });
   return data;
 }
@@ -68,10 +77,9 @@ function createCard(prod){
     </a>
     <h2 class="title">${prod.title}</h2>
     <span style="font-weight:bold;color:#0b8457;font-size:1rem">${priceStr}</span>
-    <a href="${prod.link}" target="_blank" rel="noopener noreferrer" class="shop-btn">تسوق الآن</a>
+    <a href="${prod.link}" target="_blank" rel="noopener noreferrer" class="shop-btn">تفاصيل المنتج</a>
     <div class="badge">شحن داخل السعودية</div>
   `;
-  // صورة احتياطية لو فشل التحميل
   setTimeout(()=>{
     const img=card.querySelector("img");
     img.onerror=()=>{ img.src="https://via.placeholder.com/400x300?text=No+Image"; };
