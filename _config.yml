@@ -1,8 +1,11 @@
 # /_config.yml
 title: "Saudi Matjar"
 description: "متجر منتجات"
-url: "https://sherow1982.github.io"          # نطاق المستخدم/المؤسسة [ثابت]
-baseurl: "/saudi-matjar.arabsad.com"         # اسم الريبو الفرعي
+
+url: "https://sherow1982.github.io"
+baseurl: "/saudi-matjar.arabsad.com"
+
+remote_theme: sherow1982/fur-jekyll-theme-RTL
 
 collections:
   products:
