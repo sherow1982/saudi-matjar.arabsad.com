@@ -8,33 +8,52 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>{{ page.title | escape }} | {{ site.title | default: site.name }}</title>
+    <title>{{ page.title | escape }} | {{ site.title | default: site.name | escape }}</title>
     <meta name="description" content="{{ page.description | default: site.description | strip_html | strip_newlines | truncate: 160 | escape }}" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ page.url | absolute_url }}" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="product" />
     <meta property="og:title" content="{{ page.title | escape }}" />
-    <meta property="og:description" content="{{ page.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
+    <meta property="og:description" content="{{ page.description | default: site.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
     <meta property="og:url" content="{{ page.url | absolute_url }}" />
-    {% if page.image %}
-    <meta property="og:image" content="{{ page.image | absolute_url }}" />
+    {% assign og_image = page.image | default: site.og_image %}
+    {% if og_image %}
+    <meta property="og:image" content="{{ og_image | absolute_url }}" />
     {% endif %}
 
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{{ page.title | escape }}" />
-    <meta name="twitter:description" content="{{ page.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
-    {% if page.image %}
-    <meta name="twitter:image" content="{{ page.image | absolute_url }}" />
+    <meta name="twitter:description" content="{{ page.description | default: site.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
+    {% if og_image %}
+    <meta name="twitter:image" content="{{ og_image | absolute_url }}" />
     {% endif %}
 
     <!-- JSON-LD Product Schema -->
+    {% assign avail = page.availability | default: "InStock" %}
+    {% assign currency = page.currency | default: site.currency | default: "SAR" %}
+    {% comment %}
+      Support image as single string or array: page.images (array) or page.image (string)
+    {% endcomment %}
+    {% assign images_array = nil %}
+    {% if page.images %}
+      {% assign images_array = page.images %}
+    {% elsif page.image %}
+      {% assign images_array = page.image | split: "||__single__||" %}
+      {% assign images_array = images_array | push: page.image %}
+    {% endif %}
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Product",
       "name": {{ page.title | jsonify }},
-      {% if page.image %}"image": [{{ page.image | absolute_url | jsonify }}],{% endif %}
+      {% if images_array %}
+      "image": [{% for img in images_array %}{{ img | absolute_url | jsonify }}{% unless forloop.last %}, {% endunless %}{% endfor %}],
+      {% endif %}
       {% if page.description %}"description": {{ page.description | strip_html | strip_newlines | jsonify }},{% endif %}
       {% if page.brand %}"brand": {"@type": "Brand", "name": {{ page.brand | jsonify }} },{% endif %}
       {% if page.sku %}"sku": {{ page.sku | jsonify }},{% endif %}
@@ -42,8 +61,7 @@
         "@type": "Offer",
         {% if page.buy_url %}"url": {{ page.buy_url | jsonify }},{% else %}"url": {{ page.url | absolute_url | jsonify }},{% endif %}
         {% if page.price %}"price": {{ page.price | jsonify }},{% endif %}
-        {% if page.currency %}"priceCurrency": {{ page.currency | jsonify }},{% endif %}
-        {% assign avail = page.availability | default: "InStock" %}
+        "priceCurrency": {{ currency | jsonify }},
         "availability": "https://schema.org/{{ avail }}",
         "itemCondition": "https://schema.org/NewCondition"
       }
@@ -52,17 +70,20 @@
 
     <style>
       :root { color-scheme: light dark; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", Arial, sans-serif; margin: 0; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", Arial, sans-serif; margin: 0; line-height: 1.6; }
       .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
-      .grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; align-items: start; }
       @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
       .gallery { background: var(--bg, #fafafa); border-radius: 12px; overflow: hidden; }
       .gallery img { width: 100%; height: auto; display: block; object-fit: cover; }
+      .thumbs { display: flex; gap: .5rem; margin-top: .5rem; flex-wrap: wrap; }
+      .thumbs img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid #e5e7eb; }
       .title { margin: 0 0 .5rem; font-size: clamp(1.3rem, 2vw + 1rem, 2rem); }
-      .price { font-size: 1.25rem; margin: .5rem 0; }
-      .old-price { text-decoration: line-through; opacity: .6; margin-inline-start: .5rem; }
-      .badge { display: inline-block; padding: .25rem .6rem; border-radius: 999px; background: #0a7; color: #fff; font-size: .8rem; margin-inline-start: .5rem; }
-      .desc { line-height: 1.8; margin-top: .75rem; }
+      .price { font-size: 1.25rem; margin: .5rem 0; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+      .old-price { text-decoration: line-through; opacity: .6; }
+      .badge { display: inline-block; padding: .25rem .6rem; border-radius: 999px; background: #0a7; color: #fff; font-size: .8rem; }
+      .badge-muted { background: #999; color: #fff; }
+      .desc { line-height: 1.9; margin-top: .75rem; }
       .buy { margin-top: 1rem; }
       .buy a { display: inline-block; background: #0a7; color: #fff; padding: .8rem 1.25rem; border-radius: 10px; text-decoration: none; font-weight: 600; transition: transform .06s ease, box-shadow .2s ease; }
       .buy a:hover { box-shadow: 0 6px 18px rgba(0,0,0,.15); transform: translateY(-1px); }
@@ -72,48 +93,67 @@
       .breadcrumbs { font-size: .9rem; margin: .5rem 0 1rem; color: #666; }
       .breadcrumbs a { color: inherit; text-decoration: none; }
       .breadcrumbs a:hover { text-decoration: underline; }
+      .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
     </style>
   </head>
   <body>
     <div class="container">
-      {% if page.category or page.categories %}
+      {% comment %}
+        Breadcrumbs: support single page.category (string) or page.categories (array)
+      {% endcomment %}
+      {% assign cats = nil %}
+      {% if page.categories %}
+        {% assign cats = page.categories %}
+      {% elsif page.category %}
+        {% assign cats = page.category | split: "||__single__||" %}
+        {% assign cats = cats | push: page.category %}
+      {% endif %}
+
+      {% if cats and cats != empty %}
       <nav class="breadcrumbs" aria-label="breadcrumbs">
         <a href="{{ '/' | relative_url }}">الرئيسية</a>
-        {% assign cats = page.categories | default: page.category %}
-        {% if cats %}
-          {% assign cats = cats | array %}{% comment %}ensure iterable{% endcomment %}
-          {% for c in cats %}
-            › <a href="{{ '/category/' | append: c | append: '/' | relative_url }}">{{ c }}</a>
-          {% endfor %}
-        {% endif %}
+        {% for c in cats %}
+          › <a href="{{ '/category/' | append: c | append: '/' | relative_url }}">{{ c }}</a>
+        {% endfor %}
       </nav>
       {% endif %}
 
       <div class="grid">
-        <div class="gallery">
-          {% if page.image %}
-            <img src="{{ page.image | relative_url }}" alt="{{ page.title | escape }}" loading="lazy" />
-          {% else %}
-            <img src="{{ '/assets/img/placeholder.png' | relative_url }}" alt="{{ page.title | escape }}" loading="lazy" />
+        <div>
+          <div class="gallery">
+            {% assign display_image = page.image | default: site.placeholder_image | default: '/assets/img/placeholder.png' %}
+            <img id="main-image" src="{{ display_image | relative_url }}" alt="{{ page.title | escape }}" loading="lazy" />
+          </div>
+
+          {% if page.images and page.images.size > 1 %}
+          <div class="thumbs" aria-label="صور إضافية">
+            {% for img in page.images %}
+              <img src="{{ img | relative_url }}" alt="{{ page.title | escape }} - صورة {{ forloop.index }}" loading="lazy" onclick="document.getElementById('main-image').src='{{ img | relative_url }}'">
+            {% endfor %}
+          </div>
           {% endif %}
         </div>
 
         <article>
           <h1 class="title">{{ page.title }}</h1>
 
-          <div class="price">
+          {% comment %}
+            Price block with compare_at_price and currency fallback
+          {% endcomment %}
+          <div class="price" aria-label="السعر">
+            {% assign currency = page.currency | default: site.currency | default: 'SAR' %}
             {% if page.price %}
-              <span>{{ page.price }} {{ page.currency | default: 'SAR' }}</span>
-              {% if page.compare_at_price %}
-                <span class="old-price">{{ page.compare_at_price }} {{ page.currency | default: 'SAR' }}</span>
-                <span class="badge">خصم</span>
+              <span>{{ page.price }} {{ currency }}</span>
+              {% if page.compare_at_price and page.compare_at_price > page.price %}
+                <span class="old-price">{{ page.compare_at_price }} {{ currency }}</span>
+                <span class="badge" aria-label="يوجد خصم">خصم</span>
               {% endif %}
             {% endif %}
             {% assign avail = page.availability | default: 'InStock' %}
             {% if avail == 'InStock' %}
-              <span class="badge">متوفر</span>
+              <span class="badge" aria-label="الحالة: متوفر">متوفر</span>
             {% else %}
-              <span class="badge" style="background:#999">غير متوفر</span>
+              <span class="badge badge-muted" aria-label="الحالة: غير متوفر">غير متوفر</span>
             {% endif %}
           </div>
 
@@ -132,7 +172,7 @@
             {% if page.brand %}<div>العلامة: {{ page.brand }}</div>{% endif %}
             {% if page.sku %}<div>رمز المنتج (SKU): {{ page.sku }}</div>{% endif %}
             {% if page.tags %}
-              <div class="kv">
+              <div class="kv" aria-label="الوسوم">
                 {% for t in page.tags %}
                   <span>#{{ t }}</span>
                 {% endfor %}
