@@ -10,14 +10,20 @@
     :root{--brand:#0b57d0;--bg:#f9fafb;--text:#111827;--muted:#6b7280;--card:#fff;--border:#e5e7eb;--accent:#0b8457;--nav:#fff}
     *{box-sizing:border-box}html,body{margin:0;padding:0}
     body{font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+
+    /* شريط الروابط أعلى الصفحة */
     .top-nav{position:sticky;top:0;z-index:1000;background:var(--nav);border-bottom:1px solid var(--border);backdrop-filter:saturate(150%) blur(4px)}
     .top-nav .wrap{max-width:1200px;margin-inline:auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     .brand{font-weight:700;color:var(--brand);margin-inline-end:8px;white-space:nowrap}
     .top-nav ul{margin:0;padding:0;list-style:none;display:flex;gap:12px;flex-wrap:wrap}
     .top-nav a{text-decoration:none;color:var(--brand);padding:6px 10px;border-radius:8px;display:inline-block;transition:background .15s ease}
     .top-nav a:hover{background:#eef3fd}
+
+    /* عنوان وبحث */
     .header{max-width:1200px;margin:14px auto 0;padding:0 16px;color:var(--brand);font-weight:800;text-align:center}
-    #search{width:min(100%, 1200px);display:block;margin:12px auto 10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);font-weight:600;direction:rtl}
+    #search{width:min(100%,1200px);display:block;margin:12px auto 10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);font-weight:600;direction:rtl}
+
+    /* شبكة المنتجات */
     #products{max-width:1200px;margin-inline:auto;padding:12px 16px 120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
     .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:transform .15s,box-shadow .15s;text-align:center;display:flex;flex-direction:column;justify-content:space-between;min-height:320px;border:1px solid var(--border)}
     .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
@@ -28,25 +34,37 @@
     .shop-btn:hover{opacity:.9}
     .badge{background:#FFD700;color:#000;font-weight:700;padding:4px 8px;margin-top:10px;display:inline-block;border-radius:8px;font-size:.8rem}
     .loading-msg,.empty{grid-column:1/-1;text-align:center;color:var(--muted);font-weight:700;margin:20px 0}
+
+    /* زر واتساب ثابت */
     .whatsapp-btn{position:fixed;bottom:20px;inset-inline-end:20px;background:#25D366;color:#fff;padding:12px 16px;font-weight:700;border-radius:50px;z-index:9999;text-align:center;text-decoration:none;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-    @media (max-width:480px){#products{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.product-image{height:170px}}
+
+    @media (max-width:480px){
+      #products{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+      .product-image{height:170px}
+    }
   </style>
 </head>
 <body>
 
-  <!-- شريط التنقل داخل body -->
+  <!-- شريط التنقل داخل body مع مسارات صحيحة بالنسبة لمسار المستودع -->
   <nav class="top-nav" aria-label="روابط الصفحات">
     <div class="wrap">
       <span class="brand">روابط مهمة:</span>
       <ul>
+        <!-- اختر أحد النمطين التاليين: نسبية (موصى بها من الصفحة الرئيسية) -->
+        <li><a href="pages/shipping-policy.html">سياسة الشحن</a></li>
+        <li><a href="pages/who-we-are.html">من نحن</a></li>
+        <li><a href="pages/terms-and-conditions.html">شروط الاستخدام</a></li>
+        <li><a href="pages/about-our-store.html">لمحة ونبذة عن متجرنا</a></li>
+        <li><a href="pages/social-media-pages.html">صفحات التواصل الاجتماعي</a></li>
+        <li><a href="pages/privacy-policy.html">سياسات الخصوصية</a></li>
+        <li><a href="pages/contact-us.html">اتصل بنا</a></li>
+        <li><a href="pages/refund-policy.html">سياسة الاستبدال والاسترجاع</a></li>
+
+        <!-- أو مطلقة مع بادئة المستودع لو أردت استعمالها في صفحات فرعية:
         <li><a href="/saudi-matjar.arabsad.com/pages/shipping-policy.html">سياسة الشحن</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/who-we-are.html">من نحن</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/terms-and-conditions.html">شروط الاستخدام</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/about-our-store.html">لمحة ونبذة عن متجرنا</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/social-media-pages.html">صفحات التواصل الاجتماعي</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/privacy-policy.html">سياسات الخصوصية</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/contact-us.html">اتصل بنا</a></li>
-        <li><a href="/saudi-matjar.arabsad.com/pages/refund-policy.html">سياسة الاستبدال والاسترجاع</a></li>
+        ... الخ
+        -->
       </ul>
     </div>
   </nav>
@@ -58,14 +76,15 @@
     <p class="loading-msg">جارٍ تحميل المنتجات...</p>
   </section>
 
-  <a id="whatsappBtn" href="https://wa.me/201110760081" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">راسلنا واتساب الآن</a>
+  <a id="whatsappBtn" href="https://wa.me/201110760081" target="_blank" rel="noopener noreferrer" class="whatsapp-btn" aria-label="تواصل واتساب">راسلنا واتساب الآن</a>
 
   <script>
-    const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
-    const SITE_BASE="https://sherow1982.github.io/saudi-matjar.arabsad.com";
-    const ITEMS_PER_LOAD=12;
+    // ثوابت مهمة: SITE_BASE يجب أن يطابق مسار GitHub Pages
+    const FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
+    const SITE_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com";
+    const ITEMS_PER_LOAD = 12;
 
-    let productsData=[], filteredData=[], currentIndex=0;
+    let productsData = [], filteredData = [], currentIndex = 0;
 
     function makeSlug(s){
       s=(s||"").trim().toLowerCase();
@@ -80,23 +99,23 @@
     }
 
     async function fetchFeed(){
-      const res=await fetch(FEED_URL,{headers:{'Accept':'application/xml,text/xml;q=0.9,*/*;q=0.8'}});
+      const res = await fetch(FEED_URL, { headers: { 'Accept':'application/xml,text/xml;q=0.9,*/*;q=0.8' }});
       if(!res.ok) throw new Error("Failed to fetch feed "+res.status);
-      const text=await res.text();
-      const parser=new DOMParser();
-      const xml=parser.parseFromString(text,"application/xml");
+      const text = await res.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text,"application/xml");
       if(xml.querySelector("parsererror")) throw new Error("XML parse error");
-      const items=xml.querySelectorAll("item");
-      const data=[];
+      const items = xml.querySelectorAll("item");
+      const data = [];
       items.forEach(item=>{
-        const title=item.querySelector("title")?.textContent?.trim()||"منتج بدون اسم";
-        const gid=item.querySelector("g\\:id, id")?.textContent?.trim()||title;
-        const slug=makeSlug(gid);
-        const pageUrl=`${SITE_BASE}/product/${slug}/`;
-        const image=item.querySelector("g\\:image_link, image_link, image")?.textContent?.trim()||"";
-        const priceRaw=item.querySelector("g\\:price, price")?.textContent?.trim()||"0";
-        const price=parseFloat((priceRaw||"0").replace(/[^\d.]/g,""))||0;
-        data.push({title,link:pageUrl,image,price,slug});
+        const title = item.querySelector("title")?.textContent?.trim() || "منتج بدون اسم";
+        const gid = item.querySelector("g\\:id, id")?.textContent?.trim() || title;
+        const slug = makeSlug(gid);
+        const pageUrl = `${SITE_BASE}/product/${slug}/`;
+        const image = item.querySelector("g\\:image_link, image_link, image")?.textContent?.trim() || "";
+        const priceRaw = item.querySelector("g\\:price, price")?.textContent?.trim() || "0";
+        const price = parseFloat((priceRaw||"0").replace(/[^\d.]/g,"")) || 0;
+        data.push({ title, link: pageUrl, image, price, slug });
       });
       return data;
     }
