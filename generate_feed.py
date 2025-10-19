@@ -1,185 +1,129 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-import re
-import requests
-from typing import Optional, Iterable, Tuple, Dict, List
+import os, re, sys, requests
 from bs4 import BeautifulSoup
-from lxml import etree  # استخدام lxml لتسهيل CDATA [web:245]
 
-G_NS = "http://base.google.com/ns/1.0"
-NSMAP = {"g": G_NS}
-ALLOWED_AVAIL = {"in_stock", "out_of_stock", "preorder", "backorder"}  # [web:80][web:16]
+BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
+EASYORDERS_FEED = os.environ.get(
+    "FEED_URL",
+    "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
+)
 
-def read_input_xml() -> str:
-    if not sys.stdin.isatty():
-        data = sys.stdin.read()
-        if data.strip():
-            return data
-    if os.path.exists("feed.xml"):
-        with open("feed.xml", "r", encoding="utf-8") as f:
-            return f.read()
-    feed_url = os.getenv("FEED_URL")
-    if feed_url:
-        resp = requests.get(feed_url, timeout=30)
-        resp.raise_for_status()
-        return resp.text
-    raise RuntimeError("لم يتم العثور على مدخل XML. مرّر البيانات عبر stdin أو ضع feed.xml أو اضبط FEED_URL.")
+def make_slug(s: str) -> str:
+    s = (s or "").strip().lower()
+    s = re.sub(r"[^a-z0-9\\-]+", "-", s)
+    s = re.sub(r"-{2,}", "-", s).strip("-")
+    return s or "item"
 
-def text_or_none(tag) -> Optional[str]:
-    return tag.get_text(strip=True) if tag and hasattr(tag, "get_text") else None
+def text_or_none(tag):
+    return tag.get_text(strip=True) if tag else None
 
-def first_text(*candidates) -> Optional[str]:
-    for t in candidates:
-        if t:
-            return t
-    return None
+def fetch_xml(url: str) -> str:
+    print("🔄 fetching feed from EasyOrders ...")
+    r = requests.get(url, timeout=60)
+    r.raise_for_status()
+    return r.text
 
-def iter_entries(soup: BeautifulSoup) -> Iterable:
-    items = soup.find_all('item')
-    if items:
-        return items
-    return soup.find_all('entry')
+def build_output(items):
+    parts = []
+    parts.append('<?xml version="1.0" encoding="UTF-8"?>')
+    parts.append('<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">')
+    parts.append('  <channel>')
+    parts.append('    <title><![CDATA[اعلانات العرب شريف سلامة]]></title>')
+    parts.append(f'    <link>{BASE}/</link>')
+    parts.append('    <description><![CDATA[تغذية المنتجات لمتجر السعودية - اعلانات العرب شريف سلامة]]></description>')
+    parts.append('    <language>ar</language>')
 
-def normalize_price(val: Optional[str]) -> Optional[str]:
-    if not val:
-        return None
-    s = re.sub(r"\s+", " ", val.strip())
-    m = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*([A-Z]{3})$", s)
-    if m:
-        amount, cur = m.groups()
-        return f"{amount} {cur}"
-    m2 = re.match(r"^([A-Z]{3})\s*([0-9]+(?:\.[0-9]+)?)$", s)
-    if m2:
-        cur, amount = m2.groups()
-        return f"{amount} {cur}"
-    digits = re.findall(r"[0-9]+(?:\.[0-9]+)?", s)
-    cur = re.findall(r"[A-Z]{3}", s)
-    if digits:
-        amount = digits[0]
-        currency = cur[0] if cur else "SAR"
-        return f"{amount} {currency}"
-    return None
+    kept = 0
+    for it in items:
+        gid = it.get("gid")
+        title = it.get("title")
+        link = it.get("link")
+        price = it.get("price")
+        availability = it.get("availability")
+        image = it.get("image")
+        desc = it.get("description") or title or ""
+        brand = it.get("brand") or ""
+        condition = it.get("condition") or "new"
+        gpc = it.get("google_product_category") or ""
+        ptype = it.get("product_type") or ""
 
-def normalize_availability(val: Optional[str]) -> Optional[str]:
-    if not val:
-        return None
-    v = val.strip().lower().replace(" ", "_")
-    return v if v in ALLOWED_AVAIL else None  # [web:80]
-
-def extract_fields(item) -> Dict[str, Optional[str]]:
-    gid = item.find('g:id')
-    plain_id = item.find('id')
-    title = item.find('g:title') or item.find('title')
-    link = item.find('g:link') or item.find('link')
-    price = item.find('g:price') or item.find('price')
-    availability = item.find('g:availability') or item.find('availability')
-    image_link = item.find('g:image_link') or item.find('image_link') or item.find('image') or item.find('enclosure')
-    description = item.find('g:description') or item.find('description') or item.find('summary')
-    brand = item.find('g:brand') or item.find('brand')
-    condition = item.find('g:condition') or item.find('condition')
-    product_type = item.find('g:product_type') or item.find('product_type')
-    google_cat = item.find('g:google_product_category') or item.find('google_product_category')
-
-    product_id = first_text(
-        text_or_none(gid),
-        text_or_none(plain_id),
-        text_or_none(title),
-        text_or_none(link),
-    )
-
-    return {
-        "id": product_id,
-        "title": text_or_none(title),
-        "link": text_or_none(link),
-        "price": normalize_price(text_or_none(price)),
-        "availability": normalize_availability(text_or_none(availability)),
-        "image_link": text_or_none(image_link),
-        "description": text_or_none(description),
-        "brand": text_or_none(brand),
-        "condition": text_or_none(condition),
-        "product_type": text_or_none(product_type),
-        "google_product_category": text_or_none(google_cat),
-    }
-
-def generate_google_records(xml_text: str) -> Tuple[List[Dict[str, Optional[str]]], List[str]]:
-    soup = BeautifulSoup(xml_text, 'xml')  # parser=xml مع g: [web:16]
-    records: List[Dict[str, Optional[str]]] = []
-    skipped: List[str] = []
-
-    for idx, item in enumerate(iter_entries(soup), start=1):
-        data = extract_fields(item)
-        if not data["id"]:
-            skipped.append(f"Entry #{idx} skipped: missing id (g:id/id/title/link).")
+        # تحقق من الحقول الأساسية
+        if not (title and price and availability and image):
             continue
-        required_missing = [k for k in ("title", "link", "image_link", "price", "availability") if not data.get(k)]
-        if required_missing:
-            skipped.append(f"Entry #{idx} skipped: missing required {required_missing}.")
-            continue
-        records.append(data)
 
-    return records, skipped
+        slug = make_slug(gid or title or link)
+        page_url = f"{BASE}/product/{slug}/"
 
-def write_google_rss(records: List[Dict[str, Optional[str]]], out_path: str = "products-feed.xml") -> None:
-    # بناء الجذر مع NSMAP لضمان xmlns:g
-    rss = etree.Element("rss", nsmap=NSMAP)
-    rss.set("version", "2.0")
-    channel = etree.SubElement(rss, "channel")
+        parts.append("    <item>")
+        parts.append(f"      <g:id>{slug}</g:id>")
+        parts.append(f"      <title><![CDATA[{title}]]></title>")
+        parts.append(f"      <link>{page_url}</link>")
+        parts.append(f"      <guid>{slug}</guid>")
+        parts.append(f"      <description><![CDATA[{desc}]]></description>")
+        parts.append(f"      <g:price>{price}</g:price>")
+        parts.append(f"      <g:availability>{availability}</g:availability>")
+        parts.append(f"      <g:condition>{condition}</g:condition>")
+        parts.append(f"      <g:image_link>{image}</g:image_link>")
+        if brand:
+            parts.append(f"      <g:brand><![CDATA[{brand}]]></g:brand>")
+        if gpc:
+            parts.append(f"      <g:google_product_category>{gpc}</g:google_product_category>")
+        if ptype:
+            parts.append(f"      <g:product_type><![CDATA[{ptype}]]></g:product_type>")
+        parts.append("    </item>")
+        kept += 1
 
-    # عناوين القناة مع CDATA
-    title_el = etree.SubElement(channel, "title")
-    title_el.text = etree.CDATA("Products Feed")  # يمكنك تخصيصه
-    link_el = etree.SubElement(channel, "link")
-    link_el.text = "https://example.com"
-    desc_el = etree.SubElement(channel, "description")
-    desc_el.text = etree.CDATA("Auto-generated Google Products Feed")
-
-    for rec in records:
-        item = etree.SubElement(channel, "item")
-
-        def g(tag: str, value: Optional[str], cdata: bool = False):
-            if value is None:
-                return
-            el = etree.SubElement(item, f"{{{G_NS}}}{tag}")
-            el.text = etree.CDATA(value) if cdata else value
-
-        # الحقول المطلوبة (استخدم CDATA للنصوص)
-        g("id", rec.get("id"))
-        t = etree.SubElement(item, "title"); t.text = etree.CDATA(rec["title"])  # RSS title [web:16]
-        l = etree.SubElement(item, "link"); l.text = rec["link"]
-        d = etree.SubElement(item, "description"); d.text = etree.CDATA(rec.get("description") or rec["title"])
-        g("link", rec.get("link"))
-        g("image_link", rec.get("image_link"))
-        g("price", rec.get("price"))
-        g("availability", rec.get("availability"))
-
-        # الحقول الاختيارية
-        g("brand", rec.get("brand"), cdata=True)
-        g("condition", rec.get("condition") or "new")
-        g("product_type", rec.get("product_type"), cdata=True)
-        g("google_product_category", rec.get("google_product_category"))
-
-        # RSS القياسية
-        guid = etree.SubElement(item, "guid"); guid.text = rec["id"]
-
-    # كتابة الملف
-    tree = etree.ElementTree(rss)
-    tree.write(out_path, encoding="UTF-8", xml_declaration=True, pretty_print=True)
+    parts.append("  </channel>")
+    parts.append("</rss>")
+    xml = "\n".join(parts)
+    return xml, kept
 
 def main():
-    print("🔄 جاري جلب ومعالجة الفيد ...")
-    xml_input = read_input_xml()
-    records, skipped = generate_google_records(xml_input)
+    try:
+        raw = fetch_xml(EASYORDERS_FEED)
+    except Exception as e:
+        print("❌ failed to fetch feed:", e)
+        sys.exit(1)
 
-    print(f"✅ العناصر المعالجة: {len(records)}")
-    print(f"⚠️ العناصر المتخطاة: {len(skipped)}")
-    for msg in skipped[:20]:
-        print(" -", msg)
+    soup = BeautifulSoup(raw, "xml")
 
-    write_google_rss(records, "products-feed.xml")
-    print("📝 تم إنشاء الملف: products-feed.xml")
+    # دعم كل من RSS وAtom قدر الإمكان
+    raw_items = soup.find_all("item")
+    if not raw_items:
+        raw_items = soup.find_all("entry")
+
+    items = []
+    for it in raw_items:
+        gid = text_or_none(it.find("g:id") or it.find("id"))
+        title = text_or_none(it.find("g:title") or it.find("title"))
+        link = text_or_none(it.find("g:link") or it.find("link"))
+        price = text_or_none(it.find("g:price") or it.find("price"))
+        availability = text_or_none(it.find("g:availability") or it.find("availability"))
+        image = text_or_none(it.find("g:image_link") or it.find("image_link") or it.find("image"))
+        desc = text_or_none(it.find("g:description") or it.find("description") or it.find("summary"))
+        brand = text_or_none(it.find("g:brand") or it.find("brand"))
+        condition = text_or_none(it.find("g:condition") or it.find("condition"))
+        gpc = text_or_none(it.find("g:google_product_category") or it.find("google_product_category"))
+        ptype = text_or_none(it.find("g:product_type") or it.find("product_type"))
+
+        items.append({
+            "gid": gid, "title": title, "link": link, "price": price,
+            "availability": availability, "image": image, "description": desc,
+            "brand": brand, "condition": condition, "google_product_category": gpc,
+            "product_type": ptype
+        })
+
+    xml, kept = build_output(items)
+    with open("products-feed.xml", "w", encoding="utf-8") as f:
+        f.write(xml)
+
+    if kept == 0:
+        print("⚠️ no valid items kept (missing required fields).")
+        sys.exit(1)
+
+    print(f"✅ products-feed.xml written with {kept} items.")
 
 if __name__ == "__main__":
     main()
