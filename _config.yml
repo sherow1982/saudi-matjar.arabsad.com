@@ -1,25 +1,18 @@
 # /_config.yml
-
-# معلومات أساسية للموقع (عدّل حسبك)
 title: "Saudi Matjar"
 description: "متجر منتجات"
-url: "https://sherow1982.github.io"
-baseurl: "/saudi-matjar.arabsad.com"  # مهم لروابط صحيحة على GitHub Pages
+url: "https://sherow1982.github.io"          # نطاق المستخدم/المؤسسة [ثابت]
+baseurl: "/saudi-matjar.arabsad.com"         # اسم الريبو الفرعي
 
-# تعريف مجموعة المنتجات مع مسار روابط مبني على العنوان
 collections:
   products:
     output: true
     permalink: /product/:title/
 
-# تعيين layout افتراضي لعناصر المجموعة
 defaults:
   - scope:
       type: products
     values:
       layout: product
 
-# إعدادات إضافية (اختيارية)
 markdown: kramdown
-# استخدم ثيمك المفضل أو احذفه إن لديك layout مخصص
-theme: minima
