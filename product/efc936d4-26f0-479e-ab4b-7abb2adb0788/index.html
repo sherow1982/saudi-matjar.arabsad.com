@@ -5,20 +5,28 @@
   <title>معطر هواء للسيارة | متجر السعودية</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="معطر هواء يعمل بالطاقة الشمسية للسيارات بشفرات مروحة توربو مبتكرة وزيت كولونيا عطري طبيعي، مكثف بي اي تي جي، بدون بطاريات سهل الاستخدام قم بفك الجزء العلوي، ثم أسقط رقائق الزان والزيوت العطرية التي تأتي معها وألصقها في سيارتك وإذا كانت الشمس مشرقة فسوف يدور القرص الدوار&nbsp;المميزات :&nbsp;مثالية لتزيين السيارة والديكور الداخلي&nbsp;يمكن وضع هذا العطر السيارة على لوحة القيادة من سيارتك دون حجب وجهة نظرك&nbsp;يمكن أيضا أن تستخدم في غرفة النوم الخاصة بك ، الحمام والمكتبمصنوعة من البلاستيك عالي الجودة ومواد لوحة طاقة شمسيةتسريع العطر من خلال الدوران تلقائيا في ضوء الشمس&nbsp;يمكن أن تساعدك على البقاء في حالة تأهب وتخفيف الإجهاد القيادة أثناء القيادة&nbsp;مناسبة لمعظم السيارات ويمكن أن تكون هدية مثالية لأصدقائك.">
-  <link rel="canonical" href="{{ link }}">
+  <link rel="canonical" href="{{ link_json | strip_quotes }}">
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:0;background:#fafafa;color:#222}
-    .wrap{max-width:900px;margin:0 auto;padding:24px}
+    .wrap{max-width:1000px;margin:0 auto;padding:24px}
     header,footer{background:#fff;border-bottom:1px solid #eee}
     header .wrap, footer .wrap{padding:16px 24px}
     main{padding:24px}
-    .product{display:flex;gap:24px;flex-wrap:wrap}
-    .product img{max-width:380px;height:auto;border-radius:8px;border:1px solid #eee;background:#fff}
+    .product{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+    .product img{max-width:420px;width:100%;height:auto;border-radius:10px;border:1px solid #eee;background:#fff}
     .details{flex:1;min-width:280px}
     .price{font-size:1.4rem;color:#0b8457;margin:8px 0}
-    .btn{display:inline-block;background:#0b57d0;color:#fff;padding:12px 16px;border-radius:8px;text-decoration:none}
-    .meta{color:#666;font-size:.95rem;margin-top:8px}
+    .btn{display:inline-block;background:#0b57d0;color:#fff;padding:12px 16px;border-radius:10px;text-decoration:none;font-weight:700}
+    .btn:visited{color:#fff}
+    .meta{color:#666;font-size:.95rem;margin-top:10px}
+    .badge{display:inline-block;background:#FFD700;color:#000;font-weight:700;padding:4px 8px;border-radius:8px;margin-top:10px}
   </style>
+
+  <script>
+    // فلتر بسيط لإزالة علامات الاقتباس من قيم JSON الممرّرة كسلاسل
+    function stripQuotes(s){try{return JSON.parse(s);}catch(e){return s;}}
+  </script>
+
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -43,6 +51,7 @@
   <header><div class="wrap">
     <a href="https://sherow1982.github.io/saudi-matjar.arabsad.com/">الرئيسية</a>
   </div></header>
+
   <main><div class="wrap">
     <h1>معطر هواء للسيارة</h1>
     <div class="product">
@@ -50,11 +59,14 @@
       <div class="details">
         <div class="price">149.00 SAR</div>
         <p>معطر هواء يعمل بالطاقة الشمسية للسيارات بشفرات مروحة توربو مبتكرة وزيت كولونيا عطري طبيعي، مكثف بي اي تي جي، بدون بطاريات سهل الاستخدام قم بفك الجزء العلوي، ثم أسقط رقائق الزان والزيوت العطرية التي تأتي معها وألصقها في سيارتك وإذا كانت الشمس مشرقة فسوف يدور القرص الدوار&nbsp;المميزات :&nbsp;مثالية لتزيين السيارة والديكور الداخلي&nbsp;يمكن وضع هذا العطر السيارة على لوحة القيادة من سيارتك دون حجب وجهة نظرك&nbsp;يمكن أيضا أن تستخدم في غرفة النوم الخاصة بك ، الحمام والمكتبمصنوعة من البلاستيك عالي الجودة ومواد لوحة طاقة شمسيةتسريع العطر من خلال الدوران تلقائيا في ضوء الشمس&nbsp;يمكن أن تساعدك على البقاء في حالة تأهب وتخفيف الإجهاد القيادة أثناء القيادة&nbsp;مناسبة لمعظم السيارات ويمكن أن تكون هدية مثالية لأصدقائك.</p>
-        <a class="btn" href="{{ link }}" rel="noopener" target="_blank">اشتري الآن</a>
+        <!-- زر الشراء يوجّه إلى رابط EasyOrders الأصلي -->
+        <a class="btn" href="https://sherow1982.github.io/saudi-matjar.arabsad.com/product/efc936d4-26f0-479e-ab4b-7abb2adb0788/" rel="noopener noreferrer" target="_blank">اشترِ الآن</a>
+        <div class="badge">شحن داخل السعودية</div>
         <div class="meta">العلامة: tagerksa | الحالة: new | التوفر: in stock</div>
       </div>
     </div>
   </div></main>
+
   <footer><div class="wrap">
     © جميع الحقوق محفوظة
   </div></footer>
