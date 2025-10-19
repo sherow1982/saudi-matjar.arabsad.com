@@ -1,43 +1,146 @@
-<!-- /_layouts/product.html -->
-<!DOCTYPE html>
+---
+# Layout file: _layouts/product.html
+---
+
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <title>{{ page.title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="{{ page.title }}" />
-  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
-</head>
-<body>
-  <main class="product">
-    <article>
-      <h1>{{ page.title }}</h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-      {% if page.image %}
-      <p><img src="{{ page.image | relative_url }}" alt="{{ page.title }}" style="max-width:100%;height:auto"></p>
+    <title>{{ page.title | escape }} | {{ site.title | default: site.name }}</title>
+    <meta name="description" content="{{ page.description | default: site.description | strip_html | strip_newlines | truncate: 160 | escape }}" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="product" />
+    <meta property="og:title" content="{{ page.title | escape }}" />
+    <meta property="og:description" content="{{ page.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
+    <meta property="og:url" content="{{ page.url | absolute_url }}" />
+    {% if page.image %}
+    <meta property="og:image" content="{{ page.image | absolute_url }}" />
+    {% endif %}
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ page.title | escape }}" />
+    <meta name="twitter:description" content="{{ page.description | strip_html | strip_newlines | truncate: 200 | escape }}" />
+    {% if page.image %}
+    <meta name="twitter:image" content="{{ page.image | absolute_url }}" />
+    {% endif %}
+
+    <!-- JSON-LD Product Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": {{ page.title | jsonify }},
+      {% if page.image %}"image": [{{ page.image | absolute_url | jsonify }}],{% endif %}
+      {% if page.description %}"description": {{ page.description | strip_html | strip_newlines | jsonify }},{% endif %}
+      {% if page.brand %}"brand": {"@type": "Brand", "name": {{ page.brand | jsonify }} },{% endif %}
+      {% if page.sku %}"sku": {{ page.sku | jsonify }},{% endif %}
+      "offers": {
+        "@type": "Offer",
+        {% if page.buy_url %}"url": {{ page.buy_url | jsonify }},{% else %}"url": {{ page.url | absolute_url | jsonify }},{% endif %}
+        {% if page.price %}"price": {{ page.price | jsonify }},{% endif %}
+        {% if page.currency %}"priceCurrency": {{ page.currency | jsonify }},{% endif %}
+        {% assign avail = page.availability | default: "InStock" %}
+        "availability": "https://schema.org/{{ avail }}",
+        "itemCondition": "https://schema.org/NewCondition"
+      }
+    }
+    </script>
+
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", Arial, sans-serif; margin: 0; }
+      .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+      @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+      .gallery { background: var(--bg, #fafafa); border-radius: 12px; overflow: hidden; }
+      .gallery img { width: 100%; height: auto; display: block; object-fit: cover; }
+      .title { margin: 0 0 .5rem; font-size: clamp(1.3rem, 2vw + 1rem, 2rem); }
+      .price { font-size: 1.25rem; margin: .5rem 0; }
+      .old-price { text-decoration: line-through; opacity: .6; margin-inline-start: .5rem; }
+      .badge { display: inline-block; padding: .25rem .6rem; border-radius: 999px; background: #0a7; color: #fff; font-size: .8rem; margin-inline-start: .5rem; }
+      .desc { line-height: 1.8; margin-top: .75rem; }
+      .buy { margin-top: 1rem; }
+      .buy a { display: inline-block; background: #0a7; color: #fff; padding: .8rem 1.25rem; border-radius: 10px; text-decoration: none; font-weight: 600; transition: transform .06s ease, box-shadow .2s ease; }
+      .buy a:hover { box-shadow: 0 6px 18px rgba(0,0,0,.15); transform: translateY(-1px); }
+      .meta { margin-top: 1rem; font-size: .95rem; color: #555; }
+      .kv { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+      .kv span { background: #f1f3f5; padding: .25rem .6rem; border-radius: 8px; }
+      .breadcrumbs { font-size: .9rem; margin: .5rem 0 1rem; color: #666; }
+      .breadcrumbs a { color: inherit; text-decoration: none; }
+      .breadcrumbs a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      {% if page.category or page.categories %}
+      <nav class="breadcrumbs" aria-label="breadcrumbs">
+        <a href="{{ '/' | relative_url }}">الرئيسية</a>
+        {% assign cats = page.categories | default: page.category %}
+        {% if cats %}
+          {% assign cats = cats | array %}{% comment %}ensure iterable{% endcomment %}
+          {% for c in cats %}
+            › <a href="{{ '/category/' | append: c | append: '/' | relative_url }}">{{ c }}</a>
+          {% endfor %}
+        {% endif %}
+      </nav>
       {% endif %}
 
-      <p class="price">
-        {% if page.price %}{{ page.price }} {{ page.currency | default: 'SAR' }}{% endif %}
-      </p>
+      <div class="grid">
+        <div class="gallery">
+          {% if page.image %}
+            <img src="{{ page.image | relative_url }}" alt="{{ page.title | escape }}" loading="lazy" />
+          {% else %}
+            <img src="{{ '/assets/img/placeholder.png' | relative_url }}" alt="{{ page.title | escape }}" loading="lazy" />
+          {% endif %}
+        </div>
 
-      <ul class="meta">
-        {% if page.brand %}<li>العلامة: {{ page.brand }}</li>{% endif %}
-        {% if page.condition %}<li>الحالة: {{ page.condition }}</li>{% endif %}
-        {% if page.status %}<li>التوفر: {{ page.status }}</li>{% endif %}
-        {% if page.shipping %}<li>{{ page.shipping }}</li>{% endif %}
-      </ul>
+        <article>
+          <h1 class="title">{{ page.title }}</h1>
 
-      <div class="content">
-        {{ content }}
+          <div class="price">
+            {% if page.price %}
+              <span>{{ page.price }} {{ page.currency | default: 'SAR' }}</span>
+              {% if page.compare_at_price %}
+                <span class="old-price">{{ page.compare_at_price }} {{ page.currency | default: 'SAR' }}</span>
+                <span class="badge">خصم</span>
+              {% endif %}
+            {% endif %}
+            {% assign avail = page.availability | default: 'InStock' %}
+            {% if avail == 'InStock' %}
+              <span class="badge">متوفر</span>
+            {% else %}
+              <span class="badge" style="background:#999">غير متوفر</span>
+            {% endif %}
+          </div>
+
+          {% if page.description %}
+            <div class="desc">{{ page.description }}</div>
+          {% endif %}
+
+          <div class="buy">
+            {% assign target_url = page.buy_url | default: page.url | absolute_url %}
+            <a href="{{ target_url }}" rel="nofollow noopener external" target="_blank" aria-label="اشتري الآن: {{ page.title | escape }}">
+              اشتري الآن
+            </a>
+          </div>
+
+          <div class="meta">
+            {% if page.brand %}<div>العلامة: {{ page.brand }}</div>{% endif %}
+            {% if page.sku %}<div>رمز المنتج (SKU): {{ page.sku }}</div>{% endif %}
+            {% if page.tags %}
+              <div class="kv">
+                {% for t in page.tags %}
+                  <span>#{{ t }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </article>
       </div>
-
-      {% if page.buy_url %}
-      <p>
-        <a class="btn" href="{{ page.buy_url }}" rel="nofollow noopener" target="_blank">اشترِ الآن</a>
-      </p>
-      {% endif %}
-    </article>
-  </main>
-</body>
+    </div>
+  </body>
 </html>
