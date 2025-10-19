@@ -2,7 +2,7 @@ name: Deploy Jekyll site to Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -21,19 +21,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # إعداد روبي وتمكين كاش Bundler لضمان بيئة بناء ثابتة
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          cache-version: 0
+
+      # تهيئة Pages للحصول على base_path وغيره
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Build site with Jekyll (no Gemfile)
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
-          future: false
-          incremental: false
-          baseurl: "${{ steps.pages.outputs.base_path }}"
+      # بناء الموقع باستخدام Jekyll
+      # ملاحظة: إذا كان موقعك يُنشر على الجذر وليس مسار فرعي،
+      # ويمكن أن يسبب --baseurl مشاكل بالروابط، احذف الوسيطة بالكامل.
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
 
+      # رفع ناتج البناء كأرتيفاكت للنشر
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
