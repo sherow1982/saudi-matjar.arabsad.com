@@ -1,5 +1,6 @@
 {
   "base": "https://tagerksa.arabsad.com",
+  "repoBase": "/saudi-matjar.arabsad.com/",
   "pages": [
     { "title": "سياسة الشحن", "path": "/pages/shipping-policy", "outfile": "pages/shipping-policy.html" },
     { "title": "من نحن", "path": "/pages/who-we-are", "outfile": "pages/who-we-are.html" },
