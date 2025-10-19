@@ -1,0 +1,7 @@
+/* /assets/css/main.css */
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 2rem; background: #fafafa; }
+main.product { max-width: 800px; margin: 0 auto; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+h1 { font-size: 1.6rem; margin-top: 0; }
+.price { font-size: 1.2rem; font-weight: bold; color: #0a7; }
+.btn { display: inline-block; background: #1976d2; color: #fff; padding: .6rem 1rem; border-radius: 6px; text-decoration: none; }
+ul.meta { list-style: none; padding: 0; display: grid; gap: .25rem; }
