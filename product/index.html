@@ -2,17 +2,15 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>صفحة المنتج</title>
+  <title>تفاصيل المنتج | متجر تاجر السعودية</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="تفاصيل المنتج: الاسم والوصف والصورة مع تواصل سريع عبر واتساب." />
+  <meta name="description" content="تفاصيل المنتج، وصف وصورة وخيار التواصل عبر واتساب." />
   <link rel="canonical" href="https://sherow1982.github.io/saudi-matjar.arabsad.com/product/" />
+  <link rel="alternate" href="https://sherow1982.github.io/saudi-matjar.arabsad.com/product/" hreflang="ar-sa" />
+  <meta name="robots" content="index,follow" />
   <style>
-    :root{
-      --brand:#0b57d0; --bg:#f9fafb; --text:#111827; --muted:#6b7280;
-      --wa:#25D366;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
+    :root{ --brand:#0b57d0; --bg:#f9fafb; --text:#111827; --muted:#6b7280; --wa:#25D366 }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
     header{max-width:1000px;margin:16px auto 8px;padding:0 16px}
     .back{color:var(--brand);text-decoration:none}
@@ -39,17 +37,11 @@
   </main>
 
   <script>
-    // Config
     const FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
     const SITE_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com";
     const WHATSAPP_NUMBER = "201110760081";
 
-    // Utils
-    function slugify(s){
-      s = (s || "").trim().toLowerCase();
-      s = s.replace(/[^a-z0-9\-]+/g,"-").replace(/\-+/g,"-").replace(/^\-|\-$/g,"");
-      return s || "item";
-    }
+    function slugify(s){ s=(s||"").trim().toLowerCase(); s=s.replace(/[^a-z0-9\-]+/g,"-").replace(/\-+/g,"-").replace(/^\-|\-$/g,""); return s || "item"; }
     function parsePrice(raw){
       if(raw == null) return NaN;
       let s = String(raw).trim();
@@ -65,7 +57,6 @@
       const msg = `أرغب في طلب المنتج: ${title} | السعر: ${formatSAR(price)}`;
       return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
     }
-
     function getSlug(){
       const url = new URL(location.href);
       const path = url.pathname.replace(/\/+$/,"");
@@ -108,6 +99,59 @@
       `;
     }
 
+    // SEO enhancements for product page
+    function updateSEO(p){
+      document.title = `متجر تاجر السعودية | ${p.title} | شحن داخل السعودية`;
+      const desc = (p.desc && p.desc.length>20) ? p.desc.slice(0, 160) : `اشتري ${p.title} مع شحن داخل السعودية وخيار الدفع عند الاستلام.`;
+      setMeta('meta[name="description"]', 'content', desc);
+      setAttr('link[rel="canonical"]', 'href', p.link);
+      setAttr('link[rel="alternate"][hreflang="ar-sa"]', 'href', p.link);
+      injectJsonLd(buildProductJsonLd(p, p.link));
+    }
+    function setMeta(selector, attr, value){
+      let el = document.querySelector(selector);
+      if(!el){ el = document.createElement('meta'); document.head.appendChild(el); }
+      el.setAttribute('name','description');
+      el.setAttribute(attr, value);
+    }
+    function setAttr(selector, attr, value){
+      let el = document.querySelector(selector);
+      if(!el){
+        if(selector.startsWith('link[rel="canonical"]')){
+          el = document.createElement('link'); el.setAttribute('rel','canonical'); document.head.appendChild(el);
+        }else if(selector.startsWith('link[rel="alternate"]')){
+          el = document.createElement('link'); el.setAttribute('rel','alternate'); el.setAttribute('hreflang','ar-sa'); document.head.appendChild(el);
+        }else{ return; }
+      }
+      el.setAttribute(attr, value);
+    }
+    function injectJsonLd(obj){
+      const prev = document.getElementById('product-jsonld');
+      if(prev) prev.remove();
+      const s = document.createElement('script');
+      s.type = 'application/ld+json';
+      s.id = 'product-jsonld';
+      s.textContent = JSON.stringify(obj);
+      document.head.appendChild(s);
+    }
+    function buildProductJsonLd(p, url){
+      return {
+        "@context":"https://schema.org",
+        "@type":"Product",
+        "name": p.title,
+        "image": p.image ? [p.image] : [],
+        "description": p.desc || "",
+        "brand": {"@type":"Brand","name":"تاجر السعودية"},
+        "offers": {
+          "@type":"Offer",
+          "priceCurrency":"SAR",
+          "price": isFinite(p.price) ? Number(p.price).toFixed(1) : "0.0",
+          "availability":"https://schema.org/InStock",
+          "url": url
+        }
+      };
+    }
+
     async function init(){
       const root = document.getElementById("content");
       try{
@@ -117,12 +161,12 @@
         const product = items.find(x => x.slug === slug);
         if(!product){ root.innerHTML = `<p class="error">لم يتم العثور على المنتج المطلوب.</p>`; return; }
         renderProduct(product);
+        updateSEO(product);
       }catch(e){
         console.error(e);
         root.innerHTML = `<p class="error">حدث خطأ أثناء تحميل بيانات المنتج.</p>`;
       }
     }
-
     init();
   </script>
 </body>
