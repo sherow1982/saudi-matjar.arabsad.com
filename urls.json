@@ -1,0 +1,13 @@
+{
+  "base": "https://tagerksa.arabsad.com",
+  "pages": [
+    { "title": "سياسة الشحن", "path": "/pages/shipping-policy", "outfile": "pages/shipping-policy.html" },
+    { "title": "من نحن", "path": "/pages/who-we-are", "outfile": "pages/who-we-are.html" },
+    { "title": "شروط الاستخدام", "path": "/pages/terms-and-conditions", "outfile": "pages/terms-and-conditions.html" },
+    { "title": "لمحة ونبذة عن متجرنا", "path": "/pages/about-our-store", "outfile": "pages/about-our-store.html" },
+    { "title": "صفحات التواصل الاجتماعي", "path": "/pages/social-media-pages", "outfile": "pages/social-media-pages.html" },
+    { "title": "سياسات الخصوصية", "path": "/pages/privacy-policy", "outfile": "pages/privacy-policy.html" },
+    { "title": "اتصل بنا", "path": "/pages/contact-us", "outfile": "pages/contact-us.html" },
+    { "title": "سياسة الاستبدال و الاسترجاع", "path": "/pages/refund-policy", "outfile": "pages/refund-policy.html" }
+  ]
+}
