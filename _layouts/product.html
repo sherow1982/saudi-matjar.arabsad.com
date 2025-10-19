@@ -1,0 +1,43 @@
+<!-- /_layouts/product.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ page.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="{{ page.title }}" />
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+</head>
+<body>
+  <main class="product">
+    <article>
+      <h1>{{ page.title }}</h1>
+
+      {% if page.image %}
+      <p><img src="{{ page.image | relative_url }}" alt="{{ page.title }}" style="max-width:100%;height:auto"></p>
+      {% endif %}
+
+      <p class="price">
+        {% if page.price %}{{ page.price }} {{ page.currency | default: 'SAR' }}{% endif %}
+      </p>
+
+      <ul class="meta">
+        {% if page.brand %}<li>العلامة: {{ page.brand }}</li>{% endif %}
+        {% if page.condition %}<li>الحالة: {{ page.condition }}</li>{% endif %}
+        {% if page.status %}<li>التوفر: {{ page.status }}</li>{% endif %}
+        {% if page.shipping %}<li>{{ page.shipping }}</li>{% endif %}
+      </ul>
+
+      <div class="content">
+        {{ content }}
+      </div>
+
+      {% if page.buy_url %}
+      <p>
+        <a class="btn" href="{{ page.buy_url }}" rel="nofollow noopener" target="_blank">اشترِ الآن</a>
+      </p>
+      {% endif %}
+    </article>
+  </main>
+</body>
+</html>
