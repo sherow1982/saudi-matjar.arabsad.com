@@ -1,0 +1,8 @@
+{
+  "name": "page-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch:pages": "node scripts/fetch-pages.mjs"
+  }
+}
