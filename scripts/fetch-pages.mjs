@@ -1,29 +1,29 @@
 import fs from "fs/promises";
 import path from "path";
 
-// يحول href/src النسبية إلى مطلقة تجاه نطاق EasyOrder الأصلي
+// Convert relative /href and /src to absolute against source domain
 function absolutizeToSource(html, base) {
   return html
     .replace(/(href|src)\s*=\s*"(\/[^"]*)"/g, (_, attr, p) => `${attr}="${new URL(p, base).href}"`)
-    .replace(/(href|src)\s*=\s*'(\/[^']*)'/g, (_, attr, p) => `${attr}='${new URL(p, base).href}'`);
+    .replace(/(href|src)\s*=\s*'(\/[^']*)'/g,  (_, attr, p) => `${attr}='${new URL(p, base).href}'`);
 }
 
-// خيار بديل: إعادة كتابة الروابط المطلقة لتشير إلى مسار موقعك على GitHub Pages عند الحاجة
+// Optional: rewrite root-leading links to your repo base on GitHub Pages (disabled by default)
 function rewriteToRepoBase(html, repoBase = "/") {
-  // إن أردت أن تشير الروابط الداخلية التي تبدأ بـ / إلى جذر موقعك تحت اسم المستودع
+  const prefix = repoBase.replace(/\/+$/,'');
   return html
-    .replace(/(href|src)\s*=\s*"(\/(?!\/)[^"]*)"/g, (_, attr, p) => `${attr}="${repoBase.replace(/\/+$/,'')}${p}"`)
-    .replace(/(href|src)\s*=\s*'(\/(?!\/)[^']*)'/g, (_, attr, p) => `${attr}='${repoBase.replace(/\/+$/,'')}${p}'`);
+    .replace(/(href|src)\s*=\s*"(\/(?!\/)[^"]*)"/g, (_, attr, p) => `${attr}="${prefix}${p}"`)
+    .replace(/(href|src)\s*=\s*'(\/(?!\/)[^']*)'/g,  (_, attr, p) => `${attr}='${prefix}${p}'`);
 }
 
 async function fetchHtml(url) {
-  const res = await fetch(url, { headers: { "Accept": "text/html,*/*;q=0.8" }});
+  const res = await fetch(url, { headers: { "Accept": "text/html,*/*;q=0.8", "User-Agent": "Mozilla/5.0 PageSyncBot" }});
   if (!res.ok) throw new Error(`Failed ${res.status} ${res.statusText} for ${url}`);
   return await res.text();
 }
 
-function buildIndex(conf){
-  const list = conf.pages.map(p => `<li><a href="${p.outfile}">${p.title}</a></li>`).join("\n        ");
+function buildPagesIndex(conf){
+  const list = conf.pages.map(p => `<li><a href="../${p.outfile}">${p.title}</a></li>`).join("\n        ");
   return `<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -33,9 +33,9 @@ function buildIndex(conf){
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.7;margin:24px;background:#f9fafb}
     h1{color:#0b57d0}
-    ul{padding-inline-start:1.25rem}
     a{color:#0b57d0;text-decoration:none}
     a:hover{text-decoration:underline}
+    ul{padding-inline-start:1.25rem}
   </style>
 </head>
 <body>
@@ -43,7 +43,7 @@ function buildIndex(conf){
   <ul>
         ${list}
   </ul>
-  <p><a href="./">العودة للصفحة الرئيسية</a></p>
+  <p><a href="../">العودة للصفحة الرئيسية</a></p>
 </body>
 </html>`;
 }
@@ -51,27 +51,26 @@ function buildIndex(conf){
 async function main(){
   const conf = JSON.parse(await fs.readFile("./urls.json", "utf-8"));
 
-  // جلب وحفظ كل صفحة
   for (const p of conf.pages) {
     const url = new URL(p.path, conf.base).href;
     const html = await fetchHtml(url);
 
-    // 1) ثبّت الأصول إلى نطاق المصدر كي لا تتكسر
+    // 1) normalize assets to source so CSS/images don't break on Pages
     let normalized = absolutizeToSource(html, conf.base);
 
-    // 2) إذا رغبت أن تشير الروابط الجذرية إلى موقعك على GitHub Pages، فعّل السطر التالي:
+    // 2) if needed, rewrite root-leading href/src to your repo base on Pages (optional)
     // normalized = rewriteToRepoBase(normalized, conf.repoBase);
 
-    // اكتب الملف
-    await fs.mkdir(path.dirname(p.outfile), { recursive: true });
-    await fs.writeFile(p.outfile, normalized, "utf-8");
-    console.log("Wrote", p.outfile);
+    const outFile = p.outfile;
+    await fs.mkdir(path.dirname(outFile), { recursive: true });
+    await fs.writeFile(outFile, normalized, "utf-8");
+    console.log("Wrote", outFile);
   }
 
-  // أنشئ فهرس الصفحات
-  const indexHtml = buildIndex(conf);
-  await fs.writeFile("index.html", indexHtml, "utf-8");
-  console.log("Wrote index.html");
+  // write index of pages under pages/ to avoid overriding site home
+  const pagesIndex = buildPagesIndex(conf);
+  await fs.writeFile("pages/index-pages.html", pagesIndex, "utf-8");
+  console.log("Wrote pages/index-pages.html");
 }
 
 await main();
