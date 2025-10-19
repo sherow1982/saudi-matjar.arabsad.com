@@ -3,7 +3,7 @@ name: Sync EasyOrder Pages
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *"   # يومياً 03:00 UTC
+    - cron: "0 3 * * *"   # Every day at 03:00 UTC
   push:
     paths:
       - scripts/**.mjs
@@ -34,7 +34,7 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
             npm ci
@@ -63,7 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
