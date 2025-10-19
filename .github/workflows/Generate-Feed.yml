@@ -2,7 +2,7 @@ name: Update Products Feed
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'   # Daily at midnight UTC
   workflow_dispatch:
 
 permissions:
@@ -31,7 +31,7 @@ jobs:
 
       - name: Run feed generator
         env:
-          FEED_URL: ${{ secrets.FEED_URL }}
+          FEED_URL: https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google
         run: |
           set -e
           python generate_feed.py
