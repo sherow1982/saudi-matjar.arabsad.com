@@ -2,9 +2,9 @@ name: Update Products Feed
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
-    - cron: '0 0 * * *'   # Daily at midnight UTC
+    - cron: "0 0 * * *"  # Daily at midnight UTC
   workflow_dispatch:
 
 permissions:
@@ -13,18 +13,23 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # يعمل فقط على فرع main كطبقة أمان إضافية
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # نستخدم التوكن لاحقًا للدفع اليدوي
           persist-credentials: false
+          # في حالة تشغيل عبر PR، checkout إلى head_ref، وإلا يبقى على الفرع الحالي
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -50,15 +55,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
+          # إعداد المستخدم
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          # إضافة الملفات المتوقعة
           git add products-feed.xml product
+
+          # التحقق من وجود تغييرات
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
+
+          # إنشاء الالتزام مع وسم تخطي CI لمنع الحلقة
           git commit -m "[skip ci] Auto-update feed and pages"
+
+          # الدفع بمرونة مع إعادة محاولات
+          REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
           for i in 1 2 3; do
-            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" "HEAD:${{ github.ref_name }}" && break || \
+            git push "$REMOTE" "HEAD:$BRANCH" && break || \
             (echo "Push failed (attempt $i). Retrying in 5s..." && sleep 5)
           done
