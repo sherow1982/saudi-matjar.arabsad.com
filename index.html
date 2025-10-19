@@ -4,116 +4,138 @@
 <meta charset="UTF-8">
 <title>متجر السعودية</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="تصفح أحدث المنتجات وتسوق الآن مع شحن داخل السعودية.">
+<link rel="canonical" href="https://sherow1982.github.io/saudi-matjar.arabsad.com/">
 <style>
-body{font-family:'Tajawal',sans-serif;background:#f9fafb;margin:0;padding:0}
-#products{padding-bottom:120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
-.card{background:#fff;padding:10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);transition:transform .15s;text-align:center;display:flex;flex-direction:column;justify-content:space-between;}
+body{font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f9fafb;margin:0;padding:0}
+#products{padding:16px 16px 120px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.08);transition:transform .15s;text-align:center;display:flex;flex-direction:column;justify-content:space-between;min-height:300px}
 .card:hover{transform:scale(1.02)}
-.product-image{width:100%;height:180px;object-fit:contain;cursor:pointer;margin-bottom:8px}
-.title{font-weight:bold;margin:.3rem 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;}
-.shop-btn{font-weight:bold;padding:8px;border-radius:6px;background:#00bfff;color:#fff;text-decoration:none;text-align:center;width:100%;display:block;margin-top:auto;height:36px;line-height:36px;}
-.loading-msg{text-align:center;color:#555;font-weight:bold;margin-top:40px}
-#search{width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;font-weight:bold}
-.badge{background:#FFD700;color:#000;font-weight:bold;padding:3px 6px;margin-top:5px;display:inline-block;border-radius:4px;font-size:.75rem}
+.product-image{width:100%;height:180px;object-fit:contain;cursor:pointer;margin-bottom:8px;background:#fff;border:1px solid #eee;border-radius:8px}
+.title{font-weight:bold;margin:.4rem 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;min-height:48px}
+.shop-btn{font-weight:bold;padding:10px;border-radius:8px;background:#0b57d0;color:#fff;text-decoration:none;text-align:center;display:block;margin-top:auto;height:40px;line-height:40px}
+.loading-msg{text-align:center;color:#555;font-weight:bold;margin:24px 0}
+#search{width:calc(100% - 32px);margin:12px 16px;padding:12px;border-radius:8px;border:1px solid #ccc;font-weight:bold}
+.badge{background:#FFD700;color:#000;font-weight:bold;padding:4px 8px;margin-top:8px;display:inline-block;border-radius:6px;font-size:.8rem}
+.header{padding:16px;text-align:center;color:#0073e6;font-weight:bold}
 .whatsapp-btn{position:fixed;bottom:20px;right:20px;background:#25D366;color:#fff;padding:12px 16px;font-weight:bold;border-radius:50px;z-index:9999;text-align:center;text-decoration:none;box-shadow:0 4px 10px rgba(0,0,0,0.2);}
+.empty{grid-column:1/-1;text-align:center;color:#555;font-weight:bold;margin:20px 0}
 </style>
 </head>
-<body class="p-3">
+<body>
 
-<h1 style="text-align:center;color:#0073e6;font-weight:bold;margin-bottom:10px;">متجر السعودية</h1>
+<h1 class="header">متجر السعودية</h1>
 <input type="text" id="search" placeholder="ابحث عن منتج...">
 <div id="products"><p class="loading-msg">جارٍ تحميل المنتجات...</p></div>
 
-<a id="whatsappBtn" href="https://wa.me/201110760081" target="_blank" class="whatsapp-btn">راسلنا واتساب الآن</a>
+<a id="whatsappBtn" href="https://wa.me/201110760081" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">راسلنا واتساب الآن</a>
 
 <script>
 const FEED_URL="https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
-const OLD_DOMAIN="https://tagerksa.arabsad.com/";
-const NEW_DOMAIN="https://tagerksa.myeasyorders.com/";
-const ITEMS_PER_LOAD=10;
+const ITEMS_PER_LOAD=12;
 
 let productsData=[], filteredData=[], currentIndex=0;
 
 async function fetchFeed(){
-    const res=await fetch(FEED_URL);
-    if(!res.ok) throw new Error("Failed to fetch feed");
-    const text=await res.text();
-    const parser=new DOMParser();
-    const xml=parser.parseFromString(text,"application/xml");
-    const items=xml.querySelectorAll("item");
-    const data=[];
-    items.forEach(item=>{
-        const title=item.querySelector("title")?.textContent||"منتج بدون اسم";
-        const link=(item.querySelector("link")?.textContent||"#").replace(OLD_DOMAIN,NEW_DOMAIN);
-        const image=item.querySelector("g\\:image_link, image_link")?.textContent||"";
-        const price=parseFloat((item.querySelector("g\\:price, price")?.textContent||"0").replace(/[^\d.]/g,""))||0;
-        data.push({title,link,image,price});
-    });
-    return data;
-}
-
-async function loadProducts(){
-    const container=document.getElementById("products");
-    container.innerHTML='<p class="loading-msg">جارٍ تحميل المنتجات...</p>';
-    try{
-        productsData=await fetchFeed();
-        filteredData=[...productsData];
-        currentIndex=0;
-        container.innerHTML="";
-        loadMoreItems();
-    }catch(err){
-        console.error(err);
-        container.innerHTML='<p class="text-center" style="color:red;font-weight:bold">حدث خطأ في تحميل المنتجات.</p>';
-    }
+  const res=await fetch(FEED_URL,{headers:{'Accept':'application/xml,text/xml;q=0.9,*/*;q=0.8'}});
+  if(!res.ok) throw new Error("Failed to fetch feed");
+  const text=await res.text();
+  const parser=new DOMParser();
+  const xml=parser.parseFromString(text,"application/xml");
+  if(xml.querySelector("parsererror")) throw new Error("XML parse error");
+  const items=xml.querySelectorAll("item");
+  const data=[];
+  items.forEach(item=>{
+    const title=item.querySelector("title")?.textContent?.trim()||"منتج بدون اسم";
+    // استخدم الرابط كما هو من EasyOrders (صفحة الشراء الأصلية) لصفحة الهبوط
+    const link=item.querySelector("link")?.textContent?.trim()||"#";
+    const image=item.querySelector("g\\:image_link, image_link")?.textContent?.trim()||"";
+    const priceRaw=item.querySelector("g\\:price, price")?.textContent?.trim()||"0";
+    const price=parseFloat((priceRaw||"0").replace(/[^\d.]/g,""))||0;
+    data.push({title,link,image,price});
+  });
+  return data;
 }
 
 function createCard(prod){
-    const card=document.createElement("div");
-    card.className="card";
-    card.dataset.title=prod.title;
-    card.innerHTML=`<a href="${prod.link}" target="_blank"><img data-src="${prod.image}" class="product-image lazy" alt="${prod.title}"></a>
+  const card=document.createElement("div");
+  card.className="card";
+  card.dataset.title=prod.title;
+  const priceStr = prod.price ? `${prod.price.toFixed(2)} ر.س` : "—";
+  card.innerHTML = `
+    <a href="${prod.link}" target="_blank" rel="noopener noreferrer">
+      <img data-src="${prod.image}" class="product-image lazy" alt="${prod.title}">
+    </a>
     <h2 class="title">${prod.title}</h2>
-    <span style="font-weight:bold;color:#006400;font-size:1rem">${prod.price} ر.س</span>
-    <a href="${prod.link}" target="_blank" class="shop-btn">تسوق الآن</a>
-    <div class="badge">شحن داخل السعودية</div>`;
-    return card;
+    <span style="font-weight:bold;color:#0b8457;font-size:1rem">${priceStr}</span>
+    <a href="${prod.link}" target="_blank" rel="noopener noreferrer" class="shop-btn">تسوق الآن</a>
+    <div class="badge">شحن داخل السعودية</div>
+  `;
+  // صورة احتياطية لو فشل التحميل
+  setTimeout(()=>{
+    const img=card.querySelector("img");
+    img.onerror=()=>{ img.src="https://via.placeholder.com/400x300?text=No+Image"; };
+  },0);
+  return card;
+}
+
+function renderEmpty(){
+  const container=document.getElementById("products");
+  container.innerHTML = '<p class="empty">لا توجد نتائج مطابقة.</p>';
 }
 
 function loadMoreItems(){
-    const container=document.getElementById("products");
-    const items=filteredData.slice(currentIndex,currentIndex+ITEMS_PER_LOAD);
-    items.forEach(item=>container.appendChild(createCard(item)));
-    currentIndex+=ITEMS_PER_LOAD;
-    lazyLoadImages();
+  const container=document.getElementById("products");
+  const items=filteredData.slice(currentIndex,currentIndex+ITEMS_PER_LOAD);
+  items.forEach(item=>container.appendChild(createCard(item)));
+  currentIndex+=ITEMS_PER_LOAD;
+  lazyLoadImages();
 }
 
 document.getElementById("search").addEventListener("input",function(){
-    const val=this.value.toLowerCase();
-    filteredData=productsData.filter(p=>p.title.toLowerCase().includes(val));
-    currentIndex=0;
-    const container=document.getElementById("products");
-    container.innerHTML="";
-    loadMoreItems();
+  const val=this.value.toLowerCase();
+  filteredData=productsData.filter(p=>p.title.toLowerCase().includes(val));
+  currentIndex=0;
+  const container=document.getElementById("products");
+  container.innerHTML="";
+  if(filteredData.length===0){ renderEmpty(); return; }
+  loadMoreItems();
 });
 
 window.addEventListener("scroll",()=>{
-    if((window.innerHeight+window.scrollY)>=document.body.offsetHeight-120 && currentIndex<filteredData.length){
-        loadMoreItems();
-    }
+  if((window.innerHeight+window.scrollY)>=document.body.offsetHeight-120 && currentIndex<filteredData.length){
+    loadMoreItems();
+  }
 });
 
 function lazyLoadImages(){
-    const imgs=document.querySelectorAll("img.lazy");
-    const observer=new IntersectionObserver((entries,obs)=>{
-        entries.forEach(entry=>{
-            if(entry.isIntersecting){
-                entry.target.src=entry.target.dataset.src;
-                entry.target.classList.remove("lazy");
-                obs.unobserve(entry.target);
-            }
-        });
-    },{rootMargin:"0px 0px 150px 0px",threshold:0});
-    imgs.forEach(img=>observer.observe(img));
+  const imgs=document.querySelectorAll("img.lazy");
+  const observer=new IntersectionObserver((entries,obs)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.src=entry.target.dataset.src;
+        entry.target.classList.remove("lazy");
+        obs.unobserve(entry.target);
+      }
+    });
+  },{rootMargin:"0px 0px 180px 0px",threshold:0});
+  imgs.forEach(img=>observer.observe(img));
+}
+
+async function loadProducts(){
+  const container=document.getElementById("products");
+  container.innerHTML='<p class="loading-msg">جارٍ تحميل المنتجات...</p>';
+  try{
+    productsData=await fetchFeed();
+    filteredData=[...productsData];
+    currentIndex=0;
+    container.innerHTML="";
+    if(filteredData.length===0){ renderEmpty(); return; }
+    loadMoreItems();
+  }catch(err){
+    console.error(err);
+    container.innerHTML='<p class="loading-msg" style="color:red">حدث خطأ في تحميل المنتجات.</p>';
+  }
 }
 
 loadProducts();
