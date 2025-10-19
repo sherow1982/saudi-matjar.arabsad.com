@@ -5,10 +5,8 @@ import os, re, sys, requests
 from bs4 import BeautifulSoup
 
 BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com"
-EASYORDERS_FEED = os.environ.get(
-    "FEED_URL",
-    "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
-)
+# اجعل القيمة الافتراضية تعمل حتى لو كانت FEED_URL فارغة
+EASYORDERS_FEED = os.environ.get("FEED_URL") or "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google"
 
 def make_slug(s: str) -> str:
     s = (s or "").strip().lower()
