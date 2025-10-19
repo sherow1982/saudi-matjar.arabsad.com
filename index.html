@@ -2,15 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>متجر السعودية</title>
+  <title>متجر تاجر السعودية</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="تصفح أحدث المنتجات حسب الفئات وتسوق الآن مع شحن داخل السعودية.">
-  <link rel="canonical" href="https://sherow1982.github.io/saudi-matjar.arabsad.com/">
+  <link rel="canonical" href="https://YOUR-USER.github.io/YOUR-REPO/">
   <style>
     :root{
       --brand:#0b57d0; --bg:#f9fafb; --text:#111827; --muted:#6b7280;
       --card:#fff; --border:#e5e7eb; --accent:#0b8457; --danger:#b91c1c;
       --tab-bg:#eef3fd; --tab:#0b57d0;
+      --price:#0b8457;
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0}
@@ -29,6 +30,7 @@
 
     /* header and search */
     .header{max-width:1200px;margin:14px auto 0;padding:0 16px;color:var(--brand);font-weight:900;text-align:center;letter-spacing:.2px}
+    .subtitle{max-width:1200px;margin:4px auto 0;padding:0 16px;text-align:center;color:#374151;font-weight:700}
     #search{width:min(100%,1200px);display:block;margin:12px auto 8px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);font-weight:600;direction:rtl}
 
     /* category tabs */
@@ -43,9 +45,46 @@
     .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
     .product-image{width:100%;height:190px;object-fit:contain;margin-bottom:8px;background:#fff;border:1px solid #eee;border-radius:10px}
     .title{font-weight:800;margin:.4rem 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;min-height:48px;line-height:1.3}
-    .price{font-weight:900;color:var(--accent);font-size:1rem}
-    .shop-btn{font-weight:800;padding:10px;border-radius:10px;background:var(--brand);color:#fff;text-decoration:none;text-align:center;margin-top:auto;height:42px;line-height:42px;transition:opacity .15s}
-    .shop-btn:hover{opacity:.9}
+
+    /* price: bold green 1.0 ر.س */
+    .price{font-weight:900;color:var(--price);font-size:1.05rem;margin-top:2px}
+
+    /* main CTA button centered */
+    .shop-btn{
+      font-weight:900;
+      padding:12px 14px;
+      border-radius:10px;
+      background:var(--brand);
+      color:#fff;
+      text-decoration:none;
+      text-align:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:auto;
+      min-height:46px;
+      line-height:1.2;
+      transition:opacity .15s;
+    }
+    .shop-btn:hover{opacity:.92}
+
+    /* second CTA (replace with Cash on Delivery) */
+    .cod-btn{
+      font-weight:900;
+      padding:10px 12px;
+      border-radius:10px;
+      background:#111827; /* darker to look 'danger/alert' */
+      color:#fff;
+      text-decoration:none;
+      text-align:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:10px;
+      min-height:42px;
+      letter-spacing:.2px;
+    }
+
     .badge{background:#FFD700;color:#000;font-weight:800;padding:4px 8px;margin-top:10px;display:inline-block;border-radius:8px;font-size:.8rem}
     .loading,.empty{text-align:center;color:var(--muted);font-weight:800;margin:24px 0}
     .error{color:var(--danger);font-weight:800}
@@ -62,7 +101,7 @@
 <body>
 
   <!-- legal pages nav -->
-  <nav class="top-nav" aria-label="Legal pages">
+  <nav class="top-nav" aria-label="legal pages">
     <div class="wrap">
       <span class="brand">روابط مهمة:</span>
       <ul>
@@ -78,8 +117,11 @@
     </div>
   </nav>
 
-  <!-- heading and search -->
-  <h1 class="header">تسوق حسب الفئات</h1>
+  <!-- store title -->
+  <h1 class="header">متجر تاجر السعودية</h1>
+  <p class="subtitle">تسوق حسب الفئات مع دفع عند الاستلام</p>
+
+  <!-- search -->
   <input type="text" id="search" placeholder="ابحث عن منتج أو فئة...">
 
   <!-- category tabs -->
@@ -96,7 +138,7 @@
   <script>
     // config
     const FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
-    const SITE_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com";
+    const SITE_BASE = "https://YOUR-USER.github.io/YOUR-REPO"; // set to your Pages base path
     const ITEMS_PER_LOAD = 12;
 
     // state
@@ -113,9 +155,10 @@
       return s || "item";
     }
     function formatSAR(v){
+      // format like 1.0 ر.س in bold green (handled by CSS .price)
       if(!v || !isFinite(v)) return "—";
-      try{ return new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',maximumFractionDigits:2}).format(v); }
-      catch(_){ return (v.toFixed?.(2)||v) + " ر.س"; }
+      const num = Number(v);
+      return (num.toFixed(1)) + " ر.س";
     }
     function chooseCategory(title, explicit){
       const cat = (explicit || "").trim();
@@ -152,17 +195,18 @@
       return data;
     }
 
-    // UI render
+    // UI
     function createCard(p){
       const el = document.createElement("div");
       el.className = "card";
       el.innerHTML = `
-        <a href="${p.link}" target="_blank" rel="noopener noreferrer" aria-label="Product Page">
+        <a href="${p.link}" target="_blank" rel="noopener noreferrer" aria-label="صفحة المنتج">
           <img data-src="${p.image}" class="product-image lazy" alt="${p.title.replace(/"/g,'&quot;')}">
         </a>
         <h2 class="title">${p.title}</h2>
         <span class="price">${formatSAR(p.price)}</span>
         <a href="${p.link}" target="_blank" rel="noopener noreferrer" class="shop-btn">تفاصيل المنتج</a>
+        <a href="${p.link}" target="_blank" rel="noopener noreferrer" class="cod-btn">دفع عند الاستلام</a>
         <div class="badge">${p.category}</div>
       `;
       queueMicrotask(()=>{
@@ -175,15 +219,11 @@
     function renderTabs(){
       const tabs = document.getElementById("tabs");
       tabs.innerHTML = "";
-      // collect and sort categories
       const entries = Array.from(byCategory.entries())
         .map(([cat, arr]) => ({cat, count: arr.length}))
         .sort((a,b)=> a.cat.localeCompare(b.cat,'ar'));
-      // "all" tab first
       tabs.appendChild(makeTab("الكل", allProducts.length, currentCategory==="الكل"));
-      entries.forEach(({cat,count})=>{
-        tabs.appendChild(makeTab(cat, count, currentCategory===cat));
-      });
+      entries.forEach(({cat,count})=> tabs.appendChild(makeTab(cat, count, currentCategory===cat)));
     }
 
     function makeTab(cat, count, active){
@@ -238,16 +278,8 @@
     }
 
     // events
-    document.getElementById("search").addEventListener("input", ()=>{
-      cursor = 0;
-      applyFiltersAndRender();
-    });
-
-    window.addEventListener("scroll", ()=>{
-      if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 160 && cursor < filtered.length){
-        loadMore();
-      }
-    });
+    document.getElementById("search").addEventListener("input", ()=>{ cursor = 0; applyFiltersAndRender(); });
+    window.addEventListener("scroll", ()=>{ if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 160 && cursor < filtered.length){ loadMore(); } });
 
     // init
     async function init(){
@@ -269,7 +301,6 @@
       }
       document.documentElement.style.scrollPaddingTop = "72px";
     }
-
     init();
   </script>
 </body>
