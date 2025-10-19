@@ -9,6 +9,7 @@ on:
       - scripts/**.mjs
       - urls.json
       - package.json
+      - index.html
 
 permissions:
   contents: read
@@ -27,13 +28,14 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Fetch pages from EasyOrder
+      - name: Fetch legal pages
         run: npm run fetch:pages
 
       - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .   # ارفع الجذر كله (index.html و pages/)
+          path: .   # ينشر index.html الجذر + مجلد pages/
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
