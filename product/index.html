@@ -48,14 +48,15 @@
   </main>
 
   <script>
-    // config
+    // Config
     const FEED_URL = "https://api.easy-orders.net/api/v1/products/feed/37ad236e4a0f46e29792dd52978832bc/channel/google";
     const SITE_BASE = "https://sherow1982.github.io/saudi-matjar.arabsad.com";
     const WHATSAPP_NUMBER = "201110760081";
 
+    // Utils
     function slugify(s){
       s = (s || "").trim().toLowerCase();
-      s = s.replace(/[^a-z0-9\\-]+/g,"-").replace(/\\-+/g,"-").replace(/^\\-|\\-$/g,"");
+      s = s.replace(/[^a-z0-9\-]+/g,"-").replace(/\-+/g,"-").replace(/^\-|\-$/g,"");
       return s || "item";
     }
     function parsePrice(raw){
@@ -75,11 +76,14 @@
     }
 
     function getSlug(){
-      const parts = location.pathname.replace(/\/+/g,"/").split("/");
-      const idx = parts.findIndex(p => p === "product");
-      if (idx >= 0 && parts[idx+1]) return parts[idx+1];
-      const p = new URLSearchParams(location.search).get("slug");
-      return p || "";
+      // Normalize path and strip query/hash
+      const url = new URL(location.href);
+      const path = url.pathname.replace(/\/+$/,""); // remove trailing /
+      const parts = path.split("/"); // ["","saudi-matjar.arabsad.com","product","slug"]
+      const i = parts.lastIndexOf("product");
+      if (i !== -1 && parts[i+1]) return parts[i+1];
+      // fallback: ?slug=
+      return url.searchParams.get("slug") || "";
     }
 
     async function fetchFeed(){
@@ -130,7 +134,7 @@
         renderProduct(product);
       }catch(e){
         console.error(e);
-        root.innerHTML = `<p class="error">حدث خطأ أثناء تحميل بيانات المنتج.</p>`;
+        document.getElementById("content").innerHTML = `<p class="error">حدث خطأ أثناء تحميل بيانات المنتج.</p>`;
       }
     }
 
