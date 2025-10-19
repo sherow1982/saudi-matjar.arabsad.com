@@ -1,4 +1,4 @@
-name: Sync External Pages
+name: Sync EasyOrder Pages
 
 on:
   workflow_dispatch:
@@ -27,14 +27,13 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Fetch pages
+      - name: Fetch pages from EasyOrder
         run: npm run fetch:pages
 
-      - name: Upload artifact
+      - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-
+          path: .   # ارفع الجذر كله (index.html و pages/)
   deploy:
     needs: build
     runs-on: ubuntu-latest
